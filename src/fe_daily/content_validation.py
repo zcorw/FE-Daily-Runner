@@ -38,3 +38,40 @@ def validate_question_facts(
                 raise ContentValidationError(
                     f"question {index} {field} changed: expected {expected_value!r}, got {actual[field]!r}"
                 )
+
+
+def validate_learning_content_quality(
+    content: DailyLearningContent,
+    expected_plan: dict[str, Any],
+) -> None:
+    expected_theme = expected_plan.get("main_theme")
+    if content.main_theme != expected_theme:
+        raise ContentValidationError(
+            f"main_theme mismatch: expected {expected_theme!r}, got {content.main_theme!r}"
+        )
+
+    expected_reading = expected_plan.get("reading_assignment")
+    if content.plan_reference.reading_assignment != expected_reading:
+        raise ContentValidationError(
+            "reading_assignment mismatch: "
+            f"expected {expected_reading!r}, got {content.plan_reference.reading_assignment!r}"
+        )
+
+    expected_focus = expected_plan.get("practice_focus")
+    if content.plan_reference.practice_focus != expected_focus:
+        raise ContentValidationError(
+            f"practice_focus mismatch: expected {expected_focus!r}, got {content.plan_reference.practice_focus!r}"
+        )
+
+    if len(content.terms) < 10:
+        raise ContentValidationError(f"terms must contain at least 10 items, got {len(content.terms)}")
+
+    total_minutes = 0
+    for entry in content.time_table:
+        if isinstance(entry, dict):
+            total_minutes += int(entry.get("minutes", 0))
+    if total_minutes < 55 or total_minutes > 65:
+        raise ContentValidationError(f"time_table must total about 60 minutes, got {total_minutes}")
+
+    if not content.tomorrow_suggestion:
+        raise ContentValidationError("tomorrow_suggestion must not be empty")

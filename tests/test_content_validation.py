@@ -1,6 +1,10 @@
 import pytest
 
-from fe_daily.content_validation import ContentValidationError, validate_question_facts
+from fe_daily.content_validation import (
+    ContentValidationError,
+    validate_learning_content_quality,
+    validate_question_facts,
+)
 from fe_daily.output_schema import DailyLearningContent
 
 
@@ -35,7 +39,10 @@ def generated_content(**question_overrides):
                 "reading_assignment": "Ch.4.3 SQL p.129-133",
                 "practice_focus": "SQL 10",
             },
+            "time_table": [{"minutes": 10}, {"minutes": 20}, {"minutes": 20}, {"minutes": 10}],
+            "terms": [{"term": f"term-{index}", "meaning": "meaning"} for index in range(10)],
             "questions": [question],
+            "tomorrow_suggestion": {"theme": "Transaction"},
         }
     )
 
@@ -60,3 +67,56 @@ def test_validate_question_facts_rejects_model_changed_facts(field, value):
         validate_question_facts(generated_content(**{field: value}), [runtime_detail()])
 
     assert field in str(exc_info.value)
+
+
+def expected_plan():
+    return {
+        "date": "2026-06-13",
+        "main_theme": "SQL",
+        "reading_assignment": "Ch.4.3 SQL p.129-133",
+        "practice_focus": "SQL 10",
+    }
+
+
+def test_validate_learning_content_quality_accepts_matching_plan_content():
+    validate_learning_content_quality(generated_content(), expected_plan())
+
+
+def test_validate_learning_content_quality_requires_at_least_10_terms():
+    content = generated_content()
+    content.terms = content.terms[:9]
+
+    with pytest.raises(ContentValidationError) as exc_info:
+        validate_learning_content_quality(content, expected_plan())
+
+    assert "terms" in str(exc_info.value)
+
+
+def test_validate_learning_content_quality_requires_approximately_60_minutes():
+    content = generated_content()
+    content.time_table = [{"minutes": 20}]
+
+    with pytest.raises(ContentValidationError) as exc_info:
+        validate_learning_content_quality(content, expected_plan())
+
+    assert "time_table" in str(exc_info.value)
+
+
+def test_validate_learning_content_quality_rejects_plan_mismatch():
+    with pytest.raises(ContentValidationError) as exc_info:
+        validate_learning_content_quality(
+            generated_content(),
+            {**expected_plan(), "main_theme": "Network"},
+        )
+
+    assert "main_theme" in str(exc_info.value)
+
+
+def test_validate_learning_content_quality_requires_tomorrow_suggestion():
+    content = generated_content()
+    content.tomorrow_suggestion = {}
+
+    with pytest.raises(ContentValidationError) as exc_info:
+        validate_learning_content_quality(content, expected_plan())
+
+    assert "tomorrow_suggestion" in str(exc_info.value)
