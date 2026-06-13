@@ -32,7 +32,7 @@
   - 目标: README 说明 Docker network `fe-shared`、环境变量、cron 或容器定时任务、health check、日志路径。
   - 验证: README 包含 `docker network create fe-shared` 和容器内 `curl /health` 验证步骤。
 
-- [ ] T506 [P1] 添加并发运行保护
+- [x] T506 [P1] 添加并发运行保护
   - 目标: 使用 lock file 或平台调度锁防止同一天多个 publish 并发写文件。
   - 验证: 并发启动第二个进程时退出或等待策略明确，日志记录。
 
