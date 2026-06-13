@@ -36,7 +36,7 @@
   - 目标: 使用 lock file 或平台调度锁防止同一天多个 publish 并发写文件。
   - 验证: 并发启动第二个进程时退出或等待策略明确，日志记录。
 
-- [ ] T507 [P1] 添加 secret 泄漏扫描
+- [x] T507 [P1] 添加 secret 泄漏扫描
   - 目标: 在页面、日志、临时 JSON、Telegram 文案写出前扫描敏感键名和已知 token 值。
   - 验证: 注入 `OPENAI_API_KEY`、`TELEGRAM_BOT_TOKEN`、`ADMIN_API_TOKEN` 的测试内容时校验失败。
 
