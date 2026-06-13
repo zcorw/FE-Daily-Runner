@@ -37,7 +37,7 @@
   - 目标: 写 `state/daily_state.json`，并可兼容 `.codex/daily_state.json`。
   - 验证: 状态包含 `last_run_date`、`last_daily_page`、`last_topics`、`last_question_count`、`status`。
 
-- [ ] T407 [P0] 实现运行日志
+- [x] T407 [P0] 实现运行日志
   - 目标: 写 `logs/daily_publish/YYYY-MM-DD.md`，记录运行时间、模式、题目数、输出路径、计划来源、通知状态、错误。
   - 验证: 所有失败路径都写日志并返回非 0。
 
