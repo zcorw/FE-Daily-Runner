@@ -19,7 +19,7 @@
   - 目标: Prompt 输入包含当天计划、弱点、进度摘要、10 道真实题目详情；不包含 `.env`、token、Admin API 配置。
   - 验证: 单元测试确认构造的 prompt 不含 `OPENAI_API_KEY`、`TELEGRAM_BOT_TOKEN`、`.env` 内容。
 
-- [ ] T203 [P0] 实现 Responses API 调用
+- [x] T203 [P0] 实现 Responses API 调用
   - 目标: 使用 OpenAI Python SDK 调用 Responses API，默认 `OPENAI_MODEL=gpt-5.5`、reasoning effort `low`、text verbosity `medium`。
   - 验证: mock OpenAI client 返回结构化 JSON 后可解析。
 
