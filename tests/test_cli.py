@@ -1,8 +1,8 @@
-from datetime import date
+from datetime import date, datetime, timezone
 
 import pytest
 
-from fe_daily.cli import build_parser, main, parse_args
+from fe_daily.cli import build_parser, main, parse_args, resolve_target_date
 from fe_daily.config import RunMode
 
 
@@ -20,6 +20,22 @@ def test_parse_today_and_write_mode():
     assert args.target_date is None
     assert args.today is True
     assert args.run_mode is RunMode.WRITE
+
+
+def test_resolve_target_date_uses_tokyo_date_for_today_at_utc_boundary():
+    args = parse_args(["--today", "--dry-run"])
+
+    assert resolve_target_date(
+        args,
+        timezone_name="Asia/Tokyo",
+        now=datetime(2026, 6, 13, 15, 30, tzinfo=timezone.utc),
+    ) == date(2026, 6, 14)
+
+
+def test_resolve_target_date_uses_explicit_date_without_timezone_conversion():
+    args = parse_args(["--date", "2026-06-13", "--dry-run"])
+
+    assert resolve_target_date(args, timezone_name="Asia/Tokyo") == date(2026, 6, 13)
 
 
 def test_date_and_today_are_mutually_exclusive():

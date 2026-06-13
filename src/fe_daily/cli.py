@@ -1,8 +1,9 @@
 import argparse
 from collections.abc import Sequence
-from datetime import date
+from datetime import date, datetime
 from pathlib import Path
 from typing import Any
+from zoneinfo import ZoneInfo
 
 from pydantic import ValidationError
 
@@ -16,6 +17,23 @@ def parse_date(value: str) -> date:
         return date.fromisoformat(value)
     except ValueError as exc:
         raise argparse.ArgumentTypeError("date must use YYYY-MM-DD format") from exc
+
+
+def resolve_target_date(
+    args: argparse.Namespace,
+    *,
+    timezone_name: str = "Asia/Tokyo",
+    now: datetime | None = None,
+) -> date:
+    if args.target_date is not None:
+        return args.target_date
+
+    if args.today:
+        timezone = ZoneInfo(timezone_name)
+        current_time = now or datetime.now(tz=timezone)
+        return current_time.astimezone(timezone).date()
+
+    raise ValueError("target date is not set")
 
 
 def build_parser() -> argparse.ArgumentParser:
