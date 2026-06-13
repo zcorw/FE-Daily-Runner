@@ -76,6 +76,19 @@ def render_index_page(
     )
 
 
+def render_progress_entry_markdown(
+    content: DailyLearningContent,
+    *,
+    page_url: str,
+    template_dir: str | Path = DEFAULT_TEMPLATE_DIR,
+) -> str:
+    environment = load_template_environment(template_dir)
+    template = environment.get_template("progress_entry.md.j2")
+    context = _template_context(content)
+    context["page_url"] = page_url
+    return template.render(**context)
+
+
 def _template_context(content: DailyLearningContent) -> dict[str, Any]:
     return content.model_dump(mode="json")
 

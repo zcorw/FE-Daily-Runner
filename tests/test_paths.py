@@ -9,6 +9,7 @@ from fe_daily.paths import (
     daily_page_path,
     ensure_within_base,
     index_page_path,
+    output_targets,
     resolve_existing_output,
 )
 
@@ -68,3 +69,24 @@ def test_existing_output_missing_file_writes_for_any_policy(tmp_path):
 
     for policy in ExistingPagePolicy:
         assert resolve_existing_output(target, policy) is ExistingOutputDecision.WRITE
+
+
+def test_output_targets_default_to_html_only(tmp_path):
+    targets = output_targets(tmp_path / "site", date(2026, 6, 13))
+
+    assert targets.daily_page == tmp_path / "site" / "daily" / "2026" / "06" / "2026-06-13" / "index.html"
+    assert targets.index_page == tmp_path / "site" / "index.html"
+    assert targets.markdown_daily_page is None
+    assert targets.markdown_index_page is None
+
+
+def test_output_targets_include_legacy_markdown_paths_when_enabled(tmp_path):
+    targets = output_targets(
+        tmp_path / "site",
+        date(2026, 6, 13),
+        markdown_compat_enabled=True,
+        markdown_output_dir=tmp_path / "docs",
+    )
+
+    assert targets.markdown_daily_page == tmp_path / "docs" / "daily" / "2026" / "06" / "2026-06-13.md"
+    assert targets.markdown_index_page == tmp_path / "docs" / "index.md"

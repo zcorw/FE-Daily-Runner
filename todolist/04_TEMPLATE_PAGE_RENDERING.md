@@ -36,7 +36,7 @@
   - 目标: 页面中图片只能是 `/assets/fe-siken/...` 或其他明确允许的公共路径。
   - 验证: 页面中出现 `question-bank-runtime`、本地磁盘路径、`docs/assets/fe-siken/` 时失败。
 
-- [ ] T307 [P1] 支持旧 Markdown 输出兼容配置
+- [x] T307 [P1] 支持旧 Markdown 输出兼容配置
   - 目标: 默认 HTML 输出，必要时可配置生成旧 `docs/daily/YYYY/MM/YYYY-MM-DD.md` 和 `docs/index.md`。
   - 验证: 默认不写 `docs/`；启用兼容模式时路径和 front matter 正确。
 

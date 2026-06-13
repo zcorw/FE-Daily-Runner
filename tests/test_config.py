@@ -28,6 +28,8 @@ def test_load_settings_uses_safe_defaults(tmp_path, monkeypatch):
     assert settings.asset_proxy_base_path == "/assets/fe-siken"
     assert settings.output_dir == tmp_path / "site"
     assert settings.template_dir == tmp_path / "templates"
+    assert settings.markdown_compat_enabled is False
+    assert settings.markdown_output_dir == Path("docs")
 
 
 def test_load_settings_reads_env_file(tmp_path):

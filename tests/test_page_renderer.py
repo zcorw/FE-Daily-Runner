@@ -9,6 +9,7 @@ from fe_daily.page_renderer import (
     load_template_environment,
     render_daily_page,
     render_index_page,
+    render_progress_entry_markdown,
 )
 
 
@@ -103,3 +104,16 @@ def test_render_index_page_links_current_day_once_when_entries_repeat():
     assert soup.select_one('[data-section="recent-daily-pages"]')
     assert soup.select_one('[data-section="latest-updated"]').get_text(strip=True)
     assert soup.select_one('[data-section="current-strategy"]').get_text(strip=True)
+
+
+def test_render_progress_entry_markdown_includes_front_matter():
+    markdown = render_progress_entry_markdown(
+        daily_content(),
+        page_url="/daily/2026-06-13/",
+        template_dir=ROOT / "templates",
+    )
+
+    assert markdown.startswith("---\n")
+    assert "date: 2026-06-13" in markdown
+    assert "permalink: /daily/2026-06-13/" in markdown
+    assert "title: Daily FE Study" in markdown
