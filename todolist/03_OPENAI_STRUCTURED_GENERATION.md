@@ -15,7 +15,7 @@
   - 目标: 定义 `DailyLearningContent`、`PlanReference`、`QuestionLearningBlock`、`ProgressSummary` 等 pydantic 模型。
   - 验证: 缺少 `date`、`main_theme`、`questions` 或题目字段时校验失败。
 
-- [ ] T202 [P0] 定义 OpenAI 输入边界
+- [x] T202 [P0] 定义 OpenAI 输入边界
   - 目标: Prompt 输入包含当天计划、弱点、进度摘要、10 道真实题目详情；不包含 `.env`、token、Admin API 配置。
   - 验证: 单元测试确认构造的 prompt 不含 `OPENAI_API_KEY`、`TELEGRAM_BOT_TOKEN`、`.env` 内容。
 
