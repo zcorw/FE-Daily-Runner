@@ -26,3 +26,11 @@ def test_readme_documents_consumer_boundaries():
     assert "does not read `data/fe_siken_questions.sqlite`" in text
     assert "does not read `docs/assets/fe-siken/`" in text
     assert "does not use Git commit/push as a publishing mechanism" in text
+
+
+def test_readme_documents_browser_image_proxy_boundary():
+    text = README.read_text(encoding="utf-8")
+
+    assert "/assets/fe-siken/" in text
+    assert "browser-facing image paths" in text
+    assert "must not expose `http://question-bank-runtime:8000/`" in text

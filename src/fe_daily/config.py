@@ -42,6 +42,7 @@ class DailyRunnerSettings(BaseSettings):
 
     output_dir: Path = Path("site")
     template_dir: Path = Path("templates")
+    asset_proxy_base_path: str = "/assets/fe-siken"
     run_mode: RunMode = RunMode.DRY_RUN
     existing_page_policy: ExistingPagePolicy = ExistingPagePolicy.FAIL
 
@@ -51,6 +52,7 @@ class DailyRunnerSettings(BaseSettings):
         "openai_reasoning_effort",
         "openai_text_verbosity",
         "question_bank_service_url",
+        "asset_proxy_base_path",
         mode="before",
     )
     @classmethod

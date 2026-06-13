@@ -34,7 +34,7 @@
   - 目标: 将题库返回或 Markdown 中的图片引用统一为 `/assets/fe-siken/<asset-path>`。
   - 验证: 输入 `http://question-bank-runtime:8000/assets/fe-siken/r7/q1.png` 输出 `/assets/fe-siken/r7/q1.png`。
 
-- [ ] T107 [P1] 设计浏览器图片代理交付边界
+- [x] T107 [P1] 设计浏览器图片代理交付边界
   - 目标: 明确静态 HTML 中只输出 `/assets/fe-siken/...`，由消费端或反向代理代理到 Runtime API。
   - 验证: 文档和配置中有 `/assets/fe-siken/` 代理说明；页面中不暴露 Docker 内部 URL。
 

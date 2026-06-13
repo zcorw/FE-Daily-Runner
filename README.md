@@ -108,6 +108,18 @@ docker exec <consumer-container> curl -fsS http://question-bank-runtime:8000/hea
 
 Do not use `localhost` from inside the container to reach the question bank service.
 
+## Browser Image Proxy
+
+Generated pages use browser-facing image paths under `/assets/fe-siken/`.
+
+The page output must not expose `http://question-bank-runtime:8000/` because that
+hostname is only resolvable inside the Docker network. Serve or proxy
+`/assets/fe-siken/<asset-path>` from the consumer app or reverse proxy to:
+
+```text
+$QUESTION_BANK_SERVICE_URL/assets/fe-siken/<asset-path>
+```
+
 ## Notes
 
 - `references/legacy-todolist/01_QUESTION_BANK_SERVICE_MIGRATION.md` is historical context. Do not treat it as the target architecture because it still reflects older migration thinking.

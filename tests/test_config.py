@@ -25,6 +25,7 @@ def test_load_settings_uses_safe_defaults(tmp_path, monkeypatch):
     assert settings.openai_text_verbosity == "medium"
     assert settings.run_mode is RunMode.DRY_RUN
     assert settings.existing_page_policy is ExistingPagePolicy.FAIL
+    assert settings.asset_proxy_base_path == "/assets/fe-siken"
     assert settings.output_dir == tmp_path / "site"
     assert settings.template_dir == tmp_path / "templates"
 
