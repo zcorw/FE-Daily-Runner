@@ -18,7 +18,7 @@
   - 目标: `/health` 失败时每日生成必须停止，不生成页面，不调用 OpenAI，不写正式输出。
   - 验证: `--health-check` 返回非 0；日志包含失败原因。
 
-- [ ] T103 [P0] 解析 Practice Focus 到候选题查询
+- [x] T103 [P0] 解析 Practice Focus 到候选题查询
   - 目标: 将每日计划的 `Practice Focus` 转为 Runtime API 查询条件，在 Python 中选择题目。
   - 验证: SQL join/group 4、DB design 2、transaction 2、law 2 能映射为目标分布并产生选择报告。
 
