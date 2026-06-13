@@ -212,3 +212,33 @@ def test_validate_daily_html_requires_exactly_10_questions():
         validate_daily_html(str(soup), content, page_url="/daily/2026-06-13/")
 
     assert "question count" in str(exc_info.value)
+
+
+@pytest.mark.parametrize(
+    "bad_path",
+    [
+        "question-bank-runtime/assets/r7/q1.png",
+        "C:/Users/example/docs/assets/fe-siken/r7/q1.png",
+        "docs/assets/fe-siken/r7/q1.png",
+    ],
+)
+def test_validate_daily_html_rejects_non_public_image_paths(bad_path):
+    content = generated_page_content()
+    html = rendered_daily_html(content).replace("/assets/fe-siken/r7/q1.png", bad_path)
+
+    with pytest.raises(ContentValidationError) as exc_info:
+        validate_daily_html(html, content, page_url="/daily/2026-06-13/")
+
+    assert "image" in str(exc_info.value)
+
+
+def test_validate_daily_html_accepts_explicitly_allowed_public_image_prefix():
+    content = generated_page_content()
+    html = rendered_daily_html(content).replace("/assets/fe-siken/r7/q1.png", "/static/fe-siken/r7/q1.png")
+
+    validate_daily_html(
+        html,
+        content,
+        page_url="/daily/2026-06-13/",
+        allowed_image_prefixes=("/assets/fe-siken/", "/static/fe-siken/"),
+    )

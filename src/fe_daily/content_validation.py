@@ -5,6 +5,9 @@ from bs4 import BeautifulSoup
 from fe_daily.output_schema import DailyLearningContent
 
 
+DEFAULT_PUBLIC_IMAGE_PREFIXES = ("/assets/fe-siken/",)
+
+
 class ContentValidationError(ValueError):
     pass
 
@@ -84,6 +87,7 @@ def validate_daily_html(
     content: DailyLearningContent,
     *,
     page_url: str,
+    allowed_image_prefixes: tuple[str, ...] = DEFAULT_PUBLIC_IMAGE_PREFIXES,
 ) -> None:
     _validate_no_secret_leakage(html)
     soup = BeautifulSoup(html, "html.parser")
@@ -127,7 +131,7 @@ def validate_daily_html(
         if source is None or source["href"].rstrip("/") != expected_source:
             raise ContentValidationError(f"question {index} source_url mismatch")
 
-    _validate_image_paths(soup)
+    _validate_image_paths(soup, allowed_image_prefixes)
 
 
 def _validate_no_secret_leakage(html: str) -> None:
@@ -136,8 +140,8 @@ def _validate_no_secret_leakage(html: str) -> None:
         raise ContentValidationError("secret leakage detected in rendered HTML")
 
 
-def _validate_image_paths(soup: BeautifulSoup) -> None:
+def _validate_image_paths(soup: BeautifulSoup, allowed_image_prefixes: tuple[str, ...]) -> None:
     for image in soup.find_all("img"):
         source = image.get("src", "")
-        if not source.startswith("/assets/fe-siken/"):
+        if not source.startswith(allowed_image_prefixes):
             raise ContentValidationError(f"image path is not public: {source}")
