@@ -34,7 +34,7 @@
   - 目标: 所有输出路径必须基于配置的输出根目录生成，禁止模型或用户输入直接决定路径；已有页面策略支持 `fail`、`skip`、`overwrite`。
   - 验证: 路径穿越、绝对路径逃逸、已有页面三种策略均有测试。
 
-- [ ] T007 [P1] 添加 Dockerfile 和 docker-compose 骨架
+- [x] T007 [P1] 添加 Dockerfile 和 docker-compose 骨架
   - 目标: 新应用容器可加入 external Docker network `fe-shared`，默认 `QUESTION_BANK_SERVICE_URL=http://question-bank-runtime:8000`。
   - 验证: `docker compose config` 成功；配置中不出现容器内访问 `localhost` 的题库 URL。
 
