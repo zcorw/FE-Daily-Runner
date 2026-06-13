@@ -2,7 +2,9 @@ from datetime import date
 from pathlib import Path
 from typing import Any
 
-from fe_daily.config import RunMode, load_settings
+import pytest
+
+from fe_daily.config import ExistingPagePolicy, RunMode, load_settings
 from fe_daily.output_schema import DailyLearningContent
 from fe_daily.paths import daily_page_path
 from fe_daily.workflow import run_daily_workflow
@@ -55,8 +57,10 @@ class FakeQuestionClient:
 class FakeGenerator:
     def __init__(self) -> None:
         self.payload: dict[str, Any] | None = None
+        self.call_count = 0
 
     def generate(self, payload: dict[str, Any]) -> DailyLearningContent:
+        self.call_count += 1
         self.payload = payload
         return DailyLearningContent.model_validate(
             {
@@ -124,3 +128,110 @@ def test_run_daily_workflow_dry_run_uses_full_chain_without_formal_write(tmp_pat
     assert result.dry_run_artifacts is not None
     assert result.dry_run_artifacts.preview_html.exists()
     assert not daily_page_path(settings.output_dir, date(2026, 6, 13)).exists()
+
+
+def write_plan(path: Path) -> None:
+    path.write_text(
+        "\n".join(
+            [
+                "| Date | Main Theme | 20-Minute Reading Assignment | Practice Focus |",
+                "|---|---|---|---|",
+                "| 2026-06-13 | データベース: 集計・結合 | Ch.4.3 SQL p.129-133 | SQL 10 |",
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+
+def test_run_daily_workflow_skip_policy_does_not_call_openai_for_existing_page(tmp_path):
+    plan_path = tmp_path / "june-study-plan.md"
+    write_plan(plan_path)
+    settings = load_settings(
+        _env_file=None,
+        output_dir=tmp_path / "site",
+        template_dir=ROOT / "templates",
+        existing_page_policy=ExistingPagePolicy.SKIP,
+    )
+    target = daily_page_path(settings.output_dir, date(2026, 6, 13))
+    target.parent.mkdir(parents=True)
+    target.write_text("existing", encoding="utf-8")
+    generator = FakeGenerator()
+
+    result = run_daily_workflow(
+        settings=settings,
+        target_date=date(2026, 6, 13),
+        run_mode=RunMode.WRITE,
+        plan_path=plan_path,
+        weak_points="- SQL",
+        mistake_log="- GROUP BY",
+        recent_progress="- DB",
+        question_client=FakeQuestionClient(),
+        generator=generator,
+    )
+
+    assert result.status == "skipped"
+    assert generator.call_count == 0
+    assert target.read_text(encoding="utf-8") == "existing"
+
+
+def test_run_daily_workflow_fail_policy_raises_for_existing_page_before_openai(tmp_path):
+    plan_path = tmp_path / "june-study-plan.md"
+    write_plan(plan_path)
+    settings = load_settings(
+        _env_file=None,
+        output_dir=tmp_path / "site",
+        template_dir=ROOT / "templates",
+        existing_page_policy=ExistingPagePolicy.FAIL,
+    )
+    target = daily_page_path(settings.output_dir, date(2026, 6, 13))
+    target.parent.mkdir(parents=True)
+    target.write_text("existing", encoding="utf-8")
+    generator = FakeGenerator()
+
+    with pytest.raises(FileExistsError):
+        run_daily_workflow(
+            settings=settings,
+            target_date=date(2026, 6, 13),
+            run_mode=RunMode.WRITE,
+            plan_path=plan_path,
+            weak_points="- SQL",
+            mistake_log="- GROUP BY",
+            recent_progress="- DB",
+            question_client=FakeQuestionClient(),
+            generator=generator,
+        )
+
+    assert generator.call_count == 0
+
+
+def test_run_daily_workflow_overwrite_policy_replaces_existing_page(tmp_path):
+    plan_path = tmp_path / "june-study-plan.md"
+    write_plan(plan_path)
+    settings = load_settings(
+        _env_file=None,
+        output_dir=tmp_path / "site",
+        template_dir=ROOT / "templates",
+        existing_page_policy=ExistingPagePolicy.OVERWRITE,
+    )
+    target = daily_page_path(settings.output_dir, date(2026, 6, 13))
+    target.parent.mkdir(parents=True)
+    target.write_text("existing", encoding="utf-8")
+    generator = FakeGenerator()
+
+    result = run_daily_workflow(
+        settings=settings,
+        target_date=date(2026, 6, 13),
+        run_mode=RunMode.WRITE,
+        plan_path=plan_path,
+        weak_points="- SQL",
+        mistake_log="- GROUP BY",
+        recent_progress="- DB",
+        question_client=FakeQuestionClient(),
+        generator=generator,
+    )
+
+    assert result.status == "success"
+    assert generator.call_count == 1
+    text = target.read_text(encoding="utf-8")
+    assert "existing" not in text
+    assert "データベース: 集計・結合" in text

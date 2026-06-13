@@ -7,7 +7,9 @@ from fe_daily.content_validation import validate_daily_html, validate_learning_c
 from fe_daily.dry_run import DryRunArtifactPaths, write_dry_run_artifacts
 from fe_daily.health_check import HealthStatus, check_runtime_health
 from fe_daily.output_schema import DailyLearningContent
+from fe_daily.output_writer import atomic_write_text
 from fe_daily.page_renderer import render_daily_page
+from fe_daily.paths import ExistingOutputDecision, output_targets, resolve_existing_output
 from fe_daily.prompt_builder import build_generation_payload
 from fe_daily.question_details import load_required_details
 from fe_daily.question_selection import (
@@ -60,6 +62,16 @@ def run_daily_workflow(
     question_client: WorkflowQuestionClient,
     generator: WorkflowGenerator,
 ) -> WorkflowResult:
+    target_paths = output_targets(settings.output_dir, target_date)
+    if run_mode in (RunMode.WRITE, RunMode.NOTIFY):
+        existing_decision = resolve_existing_output(target_paths.daily_page, settings.existing_page_policy)
+        if existing_decision is ExistingOutputDecision.SKIP:
+            return WorkflowResult(
+                status="skipped",
+                target_date=target_date,
+                plan_source="not-run",
+            )
+
     health = check_runtime_health(question_client)
     if health.status is not HealthStatus.OK:
         raise RuntimeError(health.message)
@@ -73,8 +85,8 @@ def run_daily_workflow(
     )
     plan_payload = _plan_payload(plan_entry)
 
-    targets = parse_practice_focus(plan_entry.practice_focus)
-    candidate_payloads = build_candidate_search_payloads(targets)
+    focus_targets = parse_practice_focus(plan_entry.practice_focus)
+    candidate_payloads = build_candidate_search_payloads(focus_targets)
     candidate_groups = [
         question_client.search_candidates(payload).get("questions", [])
         for payload in candidate_payloads
@@ -113,6 +125,14 @@ def run_daily_workflow(
             target_date=target_date,
             plan_source=plan_entry.plan_source,
             dry_run_artifacts=artifacts,
+        )
+
+    if run_mode in (RunMode.WRITE, RunMode.NOTIFY):
+        atomic_write_text(target_paths.daily_page, html)
+        return WorkflowResult(
+            status="success",
+            target_date=target_date,
+            plan_source=plan_entry.plan_source,
         )
 
     raise NotImplementedError(f"workflow run mode is not implemented yet: {run_mode.value}")
