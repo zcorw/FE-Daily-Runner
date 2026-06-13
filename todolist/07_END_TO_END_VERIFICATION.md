@@ -38,7 +38,7 @@
   - 目标: 在容器内验证 `QUESTION_BANK_SERVICE_URL=http://question-bank-runtime:8000` 和 `/health`。
   - 验证: `docker compose up` 后容器内 curl 成功。
 
-- [ ] T608 [P1] 建立真实 Runtime API 集成验收
+- [x] T608 [P1] 建立真实 Runtime API 集成验收
   - 目标: 在可用的 FE Question Bank Service 环境下获取候选题和 details batch。
   - 验证: dry-run 页面预览无 `question-bank-runtime` 浏览器 URL，图片路径为 `/assets/fe-siken/...`。
 
