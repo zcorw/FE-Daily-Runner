@@ -23,7 +23,7 @@
   - 目标: 使用 OpenAI Python SDK 调用 Responses API，默认 `OPENAI_MODEL=gpt-5.5`、reasoning effort `low`、text verbosity `medium`。
   - 验证: mock OpenAI client 返回结构化 JSON 后可解析。
 
-- [ ] T204 [P0] 实现模型事实边界校验
+- [x] T204 [P0] 实现模型事实边界校验
   - 目标: OpenAI 输出不得改写题干、选项、正确答案、来源 URL、图片路径；Python 以 Runtime API 题目事实为准。
   - 验证: 模型返回不同答案或来源 URL 时校验失败。
 
