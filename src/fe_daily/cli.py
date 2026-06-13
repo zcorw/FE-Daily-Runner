@@ -7,6 +7,8 @@ from typing import Any
 from pydantic import ValidationError
 
 from fe_daily.config import RunMode, load_settings
+from fe_daily.health_check import check_runtime_health
+from fe_daily.question_bank_client import QuestionBankClient
 
 
 def parse_date(value: str) -> date:
@@ -89,6 +91,7 @@ def main(
     argv: Sequence[str] | None = None,
     *,
     settings_overrides: dict[str, Any] | None = None,
+    question_bank_client_factory: Any | None = None,
 ) -> int:
     args = parse_args(argv)
 
@@ -96,8 +99,28 @@ def main(
         return validate_config(settings_overrides)
 
     if args.health_check:
-        print("Health check is not implemented yet.")
-        return 0
+        overrides = settings_overrides or {}
+        try:
+            settings = load_settings(**overrides)
+        except ValidationError as exc:
+            print(f"Config invalid: {exc}")
+            return 2
+
+        factory = question_bank_client_factory or (
+            lambda loaded_settings: QuestionBankClient(
+                loaded_settings.question_bank_service_url,
+                timeout=loaded_settings.question_bank_timeout_seconds,
+            )
+        )
+        client = factory(settings)
+        try:
+            result = check_runtime_health(client)
+        finally:
+            close = getattr(client, "close", None)
+            if callable(close):
+                close()
+        print(result.message)
+        return result.exit_code
 
     if args.render_only:
         print(f"Render-only is not implemented yet: {args.input_path}")

@@ -78,6 +78,8 @@ class QuestionBankClient:
             response = self._client.request(method, path, **kwargs)
         except httpx.TimeoutException as exc:
             raise QuestionBankTimeoutError(method, path, str(exc)) from exc
+        except httpx.RequestError as exc:
+            raise QuestionBankError(f"{method} {path} request failed: {exc}") from exc
 
         if response.status_code >= 400:
             raise QuestionBankHTTPError(method, path, response.status_code, response.text)

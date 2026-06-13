@@ -4,6 +4,7 @@ import httpx
 import pytest
 
 from fe_daily.question_bank_client import (
+    QuestionBankError,
     QuestionBankClient,
     QuestionBankHTTPError,
     QuestionBankTimeoutError,
@@ -127,3 +128,15 @@ def test_timeout_errors_raise_clear_exception():
 
     with pytest.raises(QuestionBankTimeoutError):
         client.health()
+
+
+def test_request_errors_raise_clear_exception():
+    def handler(request):
+        raise httpx.ConnectError("dns failed", request=request)
+
+    client = make_client(handler)
+
+    with pytest.raises(QuestionBankError) as exc_info:
+        client.health()
+
+    assert "GET /health request failed" in str(exc_info.value)

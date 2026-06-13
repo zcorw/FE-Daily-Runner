@@ -14,7 +14,7 @@
   - 目标: 支持 `GET /health`、`GET /keywords`、`GET /questions/candidates`、`POST /questions/candidates/search`、`GET /questions/by-url`、`GET /questions/{questionId}`、`POST /questions/details/batch`。
   - 验证: 使用 `pytest-httpx` 或 `respx` mock 成功、404、500、timeout。
 
-- [ ] T102 [P0] 实现 health check fail closed
+- [x] T102 [P0] 实现 health check fail closed
   - 目标: `/health` 失败时每日生成必须停止，不生成页面，不调用 OpenAI，不写正式输出。
   - 验证: `--health-check` 返回非 0；日志包含失败原因。
 
