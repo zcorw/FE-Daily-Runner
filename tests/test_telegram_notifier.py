@@ -3,7 +3,11 @@ from pathlib import Path
 
 import httpx
 
-from fe_daily.telegram_notifier import TelegramNotifier, render_telegram_message
+from fe_daily.telegram_notifier import (
+    TelegramNotifier,
+    render_failure_telegram_message,
+    render_telegram_message,
+)
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -48,3 +52,16 @@ def test_telegram_notifier_sends_html_without_logging_token_on_failure():
     assert result.status == "failed"
     assert logger.errors
     assert "secret-token" not in logger.errors[0]
+
+
+def test_render_failure_telegram_message_redacts_secret_markers():
+    html = render_failure_telegram_message(
+        date="2026-06-13",
+        stage="openai_validation",
+        error_summary="OPENAI_API_KEY=sk-secret failed",
+    )
+
+    assert "2026-06-13" in html
+    assert "openai_validation" in html
+    assert "OPENAI_API_KEY" not in html
+    assert "sk-secret" not in html

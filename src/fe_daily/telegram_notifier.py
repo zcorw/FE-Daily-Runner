@@ -1,5 +1,7 @@
 from dataclasses import dataclass
+import html
 from pathlib import Path
+import re
 from typing import Protocol
 
 import httpx
@@ -28,6 +30,16 @@ def render_telegram_message(
     environment = load_template_environment(template_dir)
     template = environment.get_template("telegram_message.html.j2")
     return template.render(date=date, main_theme=main_theme, page_url=page_url)
+
+
+def render_failure_telegram_message(*, date: str, stage: str, error_summary: str) -> str:
+    safe_error = _redact_sensitive_text(error_summary)
+    return (
+        "<p><strong>FE Daily failed</strong></p>"
+        f"<p>Date: {html.escape(date)}</p>"
+        f"<p>Stage: {html.escape(stage)}</p>"
+        f"<p>Error: {html.escape(safe_error)}</p>"
+    )
 
 
 class TelegramNotifier:
@@ -66,3 +78,11 @@ class TelegramNotifier:
             return TelegramSendResult(status="failed", message="telegram failed: ok=false")
 
         return TelegramSendResult(status="sent", message="telegram sent")
+
+
+def _redact_sensitive_text(text: str) -> str:
+    redacted = text
+    for marker in ("OPENAI_API_KEY", "TELEGRAM_BOT_TOKEN", "ADMIN_API_TOKEN"):
+        redacted = redacted.replace(marker, "[redacted]")
+    redacted = re.sub(r"sk-[A-Za-z0-9_-]+", "[redacted]", redacted)
+    return redacted
