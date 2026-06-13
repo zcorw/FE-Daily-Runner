@@ -235,3 +235,32 @@ def test_run_daily_workflow_overwrite_policy_replaces_existing_page(tmp_path):
     text = target.read_text(encoding="utf-8")
     assert "existing" not in text
     assert "データベース: 集計・結合" in text
+
+
+def test_run_daily_workflow_notify_skips_missing_telegram_config_after_write(tmp_path):
+    plan_path = tmp_path / "june-study-plan.md"
+    write_plan(plan_path)
+    settings = load_settings(
+        _env_file=None,
+        output_dir=tmp_path / "site",
+        template_dir=ROOT / "templates",
+        existing_page_policy=ExistingPagePolicy.OVERWRITE,
+        telegram_bot_token=None,
+        telegram_chat_id=None,
+    )
+
+    result = run_daily_workflow(
+        settings=settings,
+        target_date=date(2026, 6, 13),
+        run_mode=RunMode.NOTIFY,
+        plan_path=plan_path,
+        weak_points="- SQL",
+        mistake_log="- GROUP BY",
+        recent_progress="- DB",
+        question_client=FakeQuestionClient(),
+        generator=FakeGenerator(),
+    )
+
+    assert result.status == "success"
+    assert result.notification_status == "skipped: missing env"
+    assert daily_page_path(settings.output_dir, date(2026, 6, 13)).exists()

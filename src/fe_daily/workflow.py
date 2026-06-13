@@ -48,6 +48,7 @@ class WorkflowResult:
     target_date: date
     plan_source: str
     dry_run_artifacts: DryRunArtifactPaths | None = None
+    notification_status: str = "not-run"
 
 
 def run_daily_workflow(
@@ -129,10 +130,16 @@ def run_daily_workflow(
 
     if run_mode in (RunMode.WRITE, RunMode.NOTIFY):
         atomic_write_text(target_paths.daily_page, html)
+        notification_status = "not-run"
+        if run_mode is RunMode.NOTIFY and (
+            settings.telegram_bot_token is None or settings.telegram_chat_id is None
+        ):
+            notification_status = "skipped: missing env"
         return WorkflowResult(
             status="success",
             target_date=target_date,
             plan_source=plan_entry.plan_source,
+            notification_status=notification_status,
         )
 
     raise NotImplementedError(f"workflow run mode is not implemented yet: {run_mode.value}")

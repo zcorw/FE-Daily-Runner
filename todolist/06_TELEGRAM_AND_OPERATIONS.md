@@ -16,7 +16,7 @@
   - 目标: 使用 Telegram Bot API `sendMessage`，支持 HTML 转义和 `parse_mode=HTML`。
   - 验证: mock HTTP 请求中 token 不进入日志；HTML 特殊字符被转义。
 
-- [ ] T502 [P0] 实现缺失环境变量跳过通知
+- [x] T502 [P0] 实现缺失环境变量跳过通知
   - 目标: 缺少 `TELEGRAM_BOT_TOKEN` 或 `TELEGRAM_CHAT_ID` 时记录 skipped，不失败。
   - 验证: `--notify` 在页面生成成功但缺少 Telegram 配置时退出 0，日志写 `Telegram skipped: missing env`。
 
