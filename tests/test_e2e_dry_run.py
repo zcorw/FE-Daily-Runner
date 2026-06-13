@@ -2,6 +2,8 @@ from datetime import date
 from pathlib import Path
 from typing import Any
 
+from bs4 import BeautifulSoup
+
 from fe_daily.config import RunMode, load_settings
 from fe_daily.output_schema import DailyLearningContent
 from fe_daily.paths import daily_page_path
@@ -116,3 +118,41 @@ def test_e2e_dry_run_generates_artifacts_without_formal_page_or_telegram(tmp_pat
     assert result.dry_run_artifacts.preview_html.exists()
     assert not daily_page_path(settings.output_dir, date(2026, 6, 13)).exists()
     assert notifier.call_count == 0
+
+
+def test_e2e_write_generates_formal_outputs(tmp_path):
+    plan_path = tmp_path / "june-study-plan.md"
+    plan_path.write_text(
+        "\n".join(
+            [
+                "| Date | Main Theme | 20-Minute Reading Assignment | Practice Focus |",
+                "|---|---|---|---|",
+                "| 2026-06-13 | データベース: 集計・結合 | Ch.4.3 SQL p.129-133 | SQL 10 |",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    settings = load_settings(_env_file=None, output_dir=tmp_path / "site", template_dir=ROOT / "templates")
+
+    result = run_daily_workflow(
+        settings=settings,
+        target_date=date(2026, 6, 13),
+        run_mode=RunMode.WRITE,
+        plan_path=plan_path,
+        weak_points="- SQL",
+        mistake_log="- GROUP BY",
+        recent_progress="- DB",
+        question_client=FakeQuestionClient(),
+        generator=FakeGenerator(),
+    )
+
+    daily_path = daily_page_path(settings.output_dir, date(2026, 6, 13))
+    soup = BeautifulSoup(daily_path.read_text(encoding="utf-8"), "html.parser")
+
+    assert result.status == "success"
+    assert daily_path.exists()
+    assert (settings.output_dir / "index.html").exists()
+    assert (tmp_path / "personal" / "progress.md").exists()
+    assert (tmp_path / "state" / "daily_state.json").exists()
+    assert (tmp_path / "logs" / "daily_publish" / "2026-06-13.md").exists()
+    assert len(soup.select("[data-question]")) == 10

@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from datetime import date
+from datetime import date, datetime, timezone
 from typing import Any, Protocol
 
 from fe_daily.config import DailyRunnerSettings, RunMode
@@ -8,8 +8,9 @@ from fe_daily.dry_run import DryRunArtifactPaths, write_dry_run_artifacts
 from fe_daily.health_check import HealthStatus, check_runtime_health
 from fe_daily.output_schema import DailyLearningContent
 from fe_daily.output_writer import atomic_write_text
-from fe_daily.page_renderer import render_daily_page
+from fe_daily.page_renderer import render_daily_page, render_index_page
 from fe_daily.paths import ExistingOutputDecision, output_targets, resolve_existing_output
+from fe_daily.progress_context import upsert_progress_entry
 from fe_daily.prompt_builder import build_generation_payload
 from fe_daily.question_details import load_required_details
 from fe_daily.question_selection import (
@@ -18,6 +19,8 @@ from fe_daily.question_selection import (
     select_subject_a_questions,
 )
 from fe_daily.study_plan import StudyPlanEntry, select_study_plan_entry
+from fe_daily.run_log import write_run_log
+from fe_daily.state import update_daily_state
 from fe_daily.telegram_notifier import TelegramNotifier, render_telegram_message
 
 
@@ -137,6 +140,42 @@ def run_daily_workflow(
 
     if run_mode in (RunMode.WRITE, RunMode.NOTIFY):
         atomic_write_text(target_paths.daily_page, html)
+        workspace_root = settings.output_dir.parent
+        index_html = render_index_page(
+            [
+                {
+                    "date": target_date.isoformat(),
+                    "title": content.main_theme,
+                    "url": page_url,
+                }
+            ],
+            current_strategy=plan_entry.practice_focus,
+            updated_at=datetime.now(timezone.utc).isoformat(),
+            template_dir=settings.template_dir,
+        )
+        atomic_write_text(target_paths.index_page, index_html)
+        upsert_progress_entry(workspace_root / "personal" / "progress.md", content, page_url=page_url)
+        update_daily_state(
+            state_path=workspace_root / "state" / "daily_state.json",
+            legacy_state_path=workspace_root / ".codex" / "daily_state.json",
+            target_date=target_date,
+            daily_page=page_url,
+            topics=[content.main_theme],
+            question_count=len(content.questions),
+            status="success",
+        )
+        write_run_log(
+            log_root=workspace_root / "logs" / "daily_publish",
+            target_date=target_date,
+            started_at=datetime.now(timezone.utc),
+            run_mode=run_mode.value,
+            question_count=len(content.questions),
+            output_paths=[str(target_paths.daily_page), str(target_paths.index_page)],
+            plan_source=plan_entry.plan_source,
+            notification_status="not-run",
+            status="success",
+            errors=[],
+        )
         notification_status = "not-run"
         if run_mode is RunMode.NOTIFY and (
             settings.telegram_bot_token is None or settings.telegram_chat_id is None

@@ -18,7 +18,7 @@
   - 目标: 使用 mock Runtime API 和 mock OpenAI，执行 `--date 2026-06-13 --dry-run`。
   - 验证: 生成临时 JSON 和预览；不写 `site/daily/.../index.html`；不发 Telegram。
 
-- [ ] T603 [P0] 建立 write E2E 测试
+- [x] T603 [P0] 建立 write E2E 测试
   - 目标: 使用临时输出目录执行 `--write`。
   - 验证: 生成每日页面、首页、progress、state、logs；页面正好 10 道题。
 
