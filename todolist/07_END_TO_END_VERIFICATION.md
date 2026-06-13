@@ -14,7 +14,7 @@
   - 目标: `python -m pytest` 覆盖配置、CLI、日期、学习计划、题库 client、OpenAI schema、模板、写入、状态、日志、Telegram。
   - 验证: 本地测试全部通过。
 
-- [ ] T602 [P0] 建立 dry-run E2E 测试
+- [x] T602 [P0] 建立 dry-run E2E 测试
   - 目标: 使用 mock Runtime API 和 mock OpenAI，执行 `--date 2026-06-13 --dry-run`。
   - 验证: 生成临时 JSON 和预览；不写 `site/daily/.../index.html`；不发 Telegram。
 
