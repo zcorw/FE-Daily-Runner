@@ -42,7 +42,7 @@
   - 目标: 在可用的 FE Question Bank Service 环境下获取候选题和 details batch。
   - 验证: dry-run 页面预览无 `question-bank-runtime` 浏览器 URL，图片路径为 `/assets/fe-siken/...`。
 
-- [ ] T609 [P1] 编写最终发布前检查清单
+- [x] T609 [P1] 编写最终发布前检查清单
   - 目标: README 或 `docs/verification.md` 提供手动验收命令和预期结果。
   - 验证: 清单覆盖 dry-run、write、notify、health-check、secret scan、Docker network。
 
