@@ -5,6 +5,25 @@
 {% block content %}
 <section data-page-type="index">
   <h1>FE Daily</h1>
-  {% block index_content %}{% endblock %}
+  <section data-section="latest-updated">
+    <h2>Latest Updated</h2>
+    <time datetime="{{ updated_at }}">{{ updated_at }}</time>
+  </section>
+
+  <section data-section="current-strategy">
+    <h2>Current Strategy</h2>
+    <p>{{ current_strategy }}</p>
+  </section>
+
+  <section data-section="recent-daily-pages">
+    <h2>Recent Daily Pages</h2>
+    <ol>
+      {% for entry in daily_entries %}
+      <li>
+        <a href="{{ entry.url }}">{{ entry.date }} {{ entry.title }}</a>
+      </li>
+      {% endfor %}
+    </ol>
+  </section>
 </section>
 {% endblock %}

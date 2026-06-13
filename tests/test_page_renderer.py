@@ -8,6 +8,7 @@ from fe_daily.page_renderer import (
     TemplateLoadError,
     load_template_environment,
     render_daily_page,
+    render_index_page,
 )
 
 
@@ -83,3 +84,22 @@ def test_render_daily_page_outputs_required_sections_and_exactly_10_questions():
     assert soup.select_one('[data-section="review"]')
     assert soup.select_one('[data-section="tomorrow"]')
     assert len(soup.select("[data-question]")) == 10
+
+
+def test_render_index_page_links_current_day_once_when_entries_repeat():
+    html = render_index_page(
+        [
+            {"date": "2026-06-13", "title": "SQL aggregation", "url": "/daily/2026-06-13/"},
+            {"date": "2026-06-13", "title": "SQL aggregation", "url": "/daily/2026-06-13/"},
+            {"date": "2026-06-12", "title": "Networks", "url": "/daily/2026-06-12/"},
+        ],
+        current_strategy="SQL 10-question focus",
+        updated_at="2026-06-13T06:00:00+09:00",
+        template_dir=ROOT / "templates",
+    )
+    soup = BeautifulSoup(html, "html.parser")
+
+    assert len(soup.select('a[href="/daily/2026-06-13/"]')) == 1
+    assert soup.select_one('[data-section="recent-daily-pages"]')
+    assert soup.select_one('[data-section="latest-updated"]').get_text(strip=True)
+    assert soup.select_one('[data-section="current-strategy"]').get_text(strip=True)

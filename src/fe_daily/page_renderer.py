@@ -57,5 +57,33 @@ def render_daily_page(
     return template.render(**_template_context(content))
 
 
+def render_index_page(
+    daily_entries: list[dict[str, Any]],
+    *,
+    current_strategy: str,
+    updated_at: str,
+    template_dir: str | Path = DEFAULT_TEMPLATE_DIR,
+) -> str:
+    environment = load_template_environment(template_dir)
+    template = environment.get_template("index_page.html.j2")
+    return template.render(
+        daily_entries=_deduplicate_daily_entries(daily_entries),
+        current_strategy=current_strategy,
+        updated_at=updated_at,
+    )
+
+
 def _template_context(content: DailyLearningContent) -> dict[str, Any]:
     return content.model_dump(mode="json")
+
+
+def _deduplicate_daily_entries(daily_entries: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    seen_dates: set[str] = set()
+    deduplicated: list[dict[str, Any]] = []
+    for entry in daily_entries:
+        entry_date = str(entry["date"])
+        if entry_date in seen_dates:
+            continue
+        seen_dates.add(entry_date)
+        deduplicated.append(entry)
+    return deduplicated
