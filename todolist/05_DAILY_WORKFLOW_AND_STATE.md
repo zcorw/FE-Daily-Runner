@@ -17,7 +17,7 @@
   - 目标: `--today` 使用 Asia/Tokyo 日期，不依赖服务器本地时区。
   - 验证: 冻结时间跨 UTC 日期边界时仍得到东京日期。
 
-- [ ] T402 [P0] 实现 June study plan parser
+- [x] T402 [P0] 实现 June study plan parser
   - 目标: 从学习计划表读取当天 `Date`、`Main Theme`、`20-Minute Reading Assignment`、`Practice Focus`。
   - 验证: `2026-06-13` 返回 `データベース: 集計・結合` 和 SQL join/group 分布。
 
