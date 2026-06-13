@@ -25,7 +25,7 @@
   - 目标: 当天计划不存在时，基于 weak points、mistake log、recent progress 选择主题，并在日志写 `plan_source=fallback`。
   - 验证: 无计划日期生成 fallback 上下文，但不替换已有计划日期主题。
 
-- [ ] T404 [P0] 实现 workflow orchestrator
+- [x] T404 [P0] 实现 workflow orchestrator
   - 目标: 串联 health check、计划读取、候选题选择、详情获取、OpenAI 生成、schema 校验、页面渲染、内容校验、写入。
   - 验证: mock 全链路 dry-run 成功且不写正式页面。
 

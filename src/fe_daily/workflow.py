@@ -1,0 +1,137 @@
+from dataclasses import dataclass
+from datetime import date
+from typing import Any, Protocol
+
+from fe_daily.config import DailyRunnerSettings, RunMode
+from fe_daily.content_validation import validate_daily_html, validate_learning_content_quality, validate_question_facts
+from fe_daily.dry_run import DryRunArtifactPaths, write_dry_run_artifacts
+from fe_daily.health_check import HealthStatus, check_runtime_health
+from fe_daily.output_schema import DailyLearningContent
+from fe_daily.page_renderer import render_daily_page
+from fe_daily.prompt_builder import build_generation_payload
+from fe_daily.question_details import load_required_details
+from fe_daily.question_selection import (
+    build_candidate_search_payloads,
+    parse_practice_focus,
+    select_subject_a_questions,
+)
+from fe_daily.study_plan import StudyPlanEntry, select_study_plan_entry
+
+
+class WorkflowQuestionClient(Protocol):
+    def health(self) -> dict[str, Any]:
+        pass
+
+    def search_candidates(self, payload: dict[str, Any]) -> dict[str, Any]:
+        pass
+
+    def details_batch(
+        self,
+        urls: list[str],
+        *,
+        include_answer: bool,
+        include_explanation: bool,
+    ) -> dict[str, Any]:
+        pass
+
+
+class WorkflowGenerator(Protocol):
+    def generate(self, payload: dict[str, Any]) -> DailyLearningContent:
+        pass
+
+
+@dataclass(frozen=True)
+class WorkflowResult:
+    status: str
+    target_date: date
+    plan_source: str
+    dry_run_artifacts: DryRunArtifactPaths | None = None
+
+
+def run_daily_workflow(
+    *,
+    settings: DailyRunnerSettings,
+    target_date: date,
+    run_mode: RunMode,
+    plan_path: str,
+    weak_points: str,
+    mistake_log: str,
+    recent_progress: str,
+    question_client: WorkflowQuestionClient,
+    generator: WorkflowGenerator,
+) -> WorkflowResult:
+    health = check_runtime_health(question_client)
+    if health.status is not HealthStatus.OK:
+        raise RuntimeError(health.message)
+
+    plan_entry = select_study_plan_entry(
+        plan_path,
+        target_date,
+        weak_points=weak_points,
+        mistake_log=mistake_log,
+        recent_progress=recent_progress,
+    )
+    plan_payload = _plan_payload(plan_entry)
+
+    targets = parse_practice_focus(plan_entry.practice_focus)
+    candidate_payloads = build_candidate_search_payloads(targets)
+    candidate_groups = [
+        question_client.search_candidates(payload).get("questions", [])
+        for payload in candidate_payloads
+    ]
+    selected_questions = select_subject_a_questions(candidate_groups, required_count=10)
+    details = load_required_details(
+        question_client,
+        [question["url"] for question in selected_questions],
+    )
+
+    generation_payload = build_generation_payload(
+        plan=plan_payload,
+        weak_points=weak_points,
+        progress_summary=recent_progress,
+        mistake_log=mistake_log,
+        questions=details,
+    )
+    content = generator.generate(generation_payload)
+
+    validate_question_facts(content, details)
+    validate_learning_content_quality(content, _expected_plan(plan_entry))
+    page_url = f"/daily/{target_date:%Y-%m-%d}/"
+    html = render_daily_page(content, page_url=page_url, template_dir=settings.template_dir)
+    validate_daily_html(html, content, page_url=page_url)
+
+    if run_mode is RunMode.DRY_RUN:
+        artifacts = write_dry_run_artifacts(
+            output_dir=settings.output_dir,
+            target_date=target_date,
+            raw_output=content.model_dump(mode="json"),
+            validated_output=content.model_dump(mode="json"),
+            preview_html=html,
+        )
+        return WorkflowResult(
+            status="success",
+            target_date=target_date,
+            plan_source=plan_entry.plan_source,
+            dry_run_artifacts=artifacts,
+        )
+
+    raise NotImplementedError(f"workflow run mode is not implemented yet: {run_mode.value}")
+
+
+def _plan_payload(plan_entry: StudyPlanEntry) -> dict[str, Any]:
+    return {
+        "date": plan_entry.date.isoformat(),
+        "main_theme": plan_entry.main_theme,
+        "reading_assignment": plan_entry.reading_assignment,
+        "practice_focus": plan_entry.practice_focus,
+        "plan_source": plan_entry.plan_source,
+    }
+
+
+def _expected_plan(plan_entry: StudyPlanEntry) -> dict[str, Any]:
+    return {
+        "date": plan_entry.date.isoformat(),
+        "main_theme": plan_entry.main_theme,
+        "reading_assignment": plan_entry.reading_assignment,
+        "practice_focus": plan_entry.practice_focus,
+    }
