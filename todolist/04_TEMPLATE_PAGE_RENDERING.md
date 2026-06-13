@@ -16,7 +16,7 @@
   - 目标: 添加 `templates/base.html.j2`、`templates/daily_page.html.j2`、`templates/index_page.html.j2`、`templates/progress_entry.md.j2`、`templates/telegram_message.html.j2`。
   - 验证: 模板加载测试通过，缺失模板时报清晰错误。
 
-- [ ] T302 [P0] 实现每日页面渲染
+- [x] T302 [P0] 实现每日页面渲染
   - 目标: 渲染今日目标、时间分配、书籍学习范围、学习清单、至少 10 个术语、知识点、正好 10 道科目 A 题、复盘区、明日建议。
   - 验证: BeautifulSoup 检查必需 section 和 10 道题。
 

@@ -5,6 +5,92 @@
 {% block content %}
 <article data-page-type="daily" data-date="{{ date }}">
   <h1>{{ main_theme }}</h1>
-  {% block daily_content %}{% endblock %}
+  <section data-section="daily-goals">
+    <h2>Today's Goals</h2>
+    <ul>
+      {% for goal in goals %}
+      <li>{{ goal }}</li>
+      {% endfor %}
+    </ul>
+  </section>
+
+  <section data-section="time-table">
+    <h2>Time Allocation</h2>
+    <ol>
+      {% for item in time_table %}
+      <li>{{ item.minutes }} min{% if item.task is defined %}: {{ item.task }}{% endif %}</li>
+      {% endfor %}
+    </ol>
+  </section>
+
+  <section data-section="reading-assignment">
+    <h2>20-Minute Reading Assignment</h2>
+    <p>{{ plan_reference.reading_assignment }}</p>
+  </section>
+
+  <section data-section="study-checklist">
+    <h2>Study Checklist</h2>
+    <ul>
+      <li>{{ plan_reference.practice_focus }}</li>
+      {% for goal in goals %}
+      <li>{{ goal }}</li>
+      {% endfor %}
+    </ul>
+  </section>
+
+  <section data-section="terms">
+    <h2>Terms</h2>
+    <dl>
+      {% for item in terms %}
+      <dt>{{ item.term }}</dt>
+      <dd>{{ item.meaning }}</dd>
+      {% endfor %}
+    </dl>
+  </section>
+
+  <section data-section="knowledge-points">
+    <h2>Knowledge Points</h2>
+    {% for point in knowledge_points %}
+    <section>
+      <h3>{{ point.title }}</h3>
+      <p>{{ point.body }}</p>
+    </section>
+    {% endfor %}
+  </section>
+
+  <section data-section="questions">
+    <h2>Subject A Practice Questions</h2>
+    {% for question in questions %}
+    <article data-question="{{ loop.index }}">
+      <h3>Question {{ loop.index }}</h3>
+      <p>{{ question.question_text }}</p>
+      {% for image in question.images %}
+      <img src="{{ image.publicPath }}" alt="Question {{ loop.index }} reference image">
+      {% endfor %}
+      <ol type="A">
+        {% for key, value in question.choices.items() %}
+        <li><strong>{{ key }}</strong>: {{ value }}</li>
+        {% endfor %}
+      </ol>
+      <p>Answer: {{ question.answer }}</p>
+      <p>{{ question.explanation }}</p>
+      <p><a href="{{ question.source_url }}">Source</a></p>
+    </article>
+    {% endfor %}
+  </section>
+
+  <section data-section="review">
+    <h2>Review</h2>
+    <ul>
+      {% for item in review_table_template %}
+      <li>Question {{ item.question_no }}</li>
+      {% endfor %}
+    </ul>
+  </section>
+
+  <section data-section="tomorrow">
+    <h2>Tomorrow</h2>
+    <p>{{ tomorrow_suggestion.theme }}</p>
+  </section>
 </article>
 {% endblock %}

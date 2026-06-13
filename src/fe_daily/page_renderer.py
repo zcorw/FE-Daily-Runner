@@ -1,7 +1,12 @@
 from pathlib import Path
+from typing import Any
 
 from jinja2 import Environment, FileSystemLoader, StrictUndefined, select_autoescape
 
+from fe_daily.output_schema import DailyLearningContent
+
+
+DEFAULT_TEMPLATE_DIR = Path(__file__).resolve().parents[2] / "templates"
 
 REQUIRED_TEMPLATE_NAMES = (
     "base.html.j2",
@@ -40,3 +45,17 @@ def load_template_environment(template_dir: str | Path) -> Environment:
         trim_blocks=True,
         lstrip_blocks=True,
     )
+
+
+def render_daily_page(
+    content: DailyLearningContent,
+    *,
+    template_dir: str | Path = DEFAULT_TEMPLATE_DIR,
+) -> str:
+    environment = load_template_environment(template_dir)
+    template = environment.get_template("daily_page.html.j2")
+    return template.render(**_template_context(content))
+
+
+def _template_context(content: DailyLearningContent) -> dict[str, Any]:
+    return content.model_dump(mode="json")
