@@ -28,6 +28,9 @@ dev = [
   "respx>=0.21",
 ]
 
+[project.scripts]
+fe-daily-publish = "fe_daily.cli:main"
+
 [tool.setuptools]
 package-dir = {"" = "src"}
 

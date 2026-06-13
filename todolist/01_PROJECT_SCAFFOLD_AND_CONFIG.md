@@ -22,7 +22,7 @@
   - 目标: 从环境变量和 `.env` 读取运行配置，覆盖 `QUESTION_BANK_SERVICE_URL`、OpenAI 模型参数、输出目录、模板目录、运行模式、已有页面策略、Telegram 可选配置。
   - 验证: 配置测试覆盖默认值、缺失必填项、枚举非法值、secret 不进入 `repr` 或日志。
 
-- [ ] T004 [P0] 实现 CLI 参数骨架
+- [x] T004 [P0] 实现 CLI 参数骨架
   - 目标: 支持 `--date YYYY-MM-DD`、`--today`、`--dry-run`、`--write`、`--notify`、`--health-check`、`--validate-config`、`--render-only --input <json>`。
   - 验证: CLI 单元测试确认互斥参数和退出码；`--validate-config` 在缺少 OpenAI key 时明确失败或标记 dry-run 限制。
 
