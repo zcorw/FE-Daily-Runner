@@ -2,9 +2,14 @@ import json
 from typing import Any
 
 from openai import OpenAI
+from pydantic import ValidationError
 
 from fe_daily.config import DailyRunnerSettings
 from fe_daily.output_schema import DailyLearningContent
+
+
+class OpenAIGenerationError(RuntimeError):
+    pass
 
 
 class OpenAIGenerator:
@@ -19,6 +24,29 @@ class OpenAIGenerator:
         )
 
     def generate(self, payload: dict[str, Any]) -> DailyLearningContent:
+        last_error: ValidationError | None = None
+        for attempt in range(2):
+            request_payload = payload
+            if last_error is not None:
+                request_payload = {
+                    **payload,
+                    "previous_validation_error": str(last_error),
+                    "instruction": "Previous validation error must be fixed. Return valid structured JSON.",
+                }
+            response = self._create_response(request_payload)
+            raw_text = response.output_text
+            try:
+                return DailyLearningContent.model_validate_json(raw_text)
+            except ValidationError as exc:
+                last_error = exc
+                if attempt == 1:
+                    raise OpenAIGenerationError(
+                        f"OpenAI structured output failed validation after retry: {exc}"
+                    ) from exc
+
+        raise OpenAIGenerationError("OpenAI structured output failed validation")
+
+    def _create_response(self, payload: dict[str, Any]) -> Any:
         response = self.client.responses.create(
             model=self.settings.openai_model,
             reasoning={"effort": self.settings.openai_reasoning_effort},
@@ -43,5 +71,4 @@ class OpenAIGenerator:
                 }
             ],
         )
-        raw_text = response.output_text
-        return DailyLearningContent.model_validate_json(raw_text)
+        return response
