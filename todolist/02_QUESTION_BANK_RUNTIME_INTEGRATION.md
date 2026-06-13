@@ -26,7 +26,7 @@
   - 目标: 只选择 `exam_part = 科目A` 的题，最终必须正好 10 道；不足 10 道时失败。
   - 验证: 候选题不足时返回非 0，不调用 OpenAI 补题。
 
-- [ ] T105 [P0] 实现 batch details 获取
+- [x] T105 [P0] 实现 batch details 获取
   - 目标: 使用 `includeAnswer=true` 和 `includeExplanation=true` 获取题干、选项、正解、解说、图片引用、来源 URL。
   - 验证: 每道题详情缺少来源 URL、正解或解说时失败。
 
