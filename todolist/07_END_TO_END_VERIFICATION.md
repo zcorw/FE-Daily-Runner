@@ -34,7 +34,7 @@
   - 目标: 自动检查 35 条业务规则中可机器验证的项目。
   - 验证: 验收脚本确认未读取 SQLite、未读取本地图库、无 Docker 内部 URL、无 secret、题目数和字段完整。
 
-- [ ] T607 [P1] 建立 Docker 网络 smoke test
+- [x] T607 [P1] 建立 Docker 网络 smoke test
   - 目标: 在容器内验证 `QUESTION_BANK_SERVICE_URL=http://question-bank-runtime:8000` 和 `/health`。
   - 验证: `docker compose up` 后容器内 curl 成功。
 
