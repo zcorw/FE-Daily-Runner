@@ -22,7 +22,7 @@
   - 目标: 将每日计划的 `Practice Focus` 转为 Runtime API 查询条件，在 Python 中选择题目。
   - 验证: SQL join/group 4、DB design 2、transaction 2、law 2 能映射为目标分布并产生选择报告。
 
-- [ ] T104 [P0] 实现 10 道科目 A 选择规则
+- [x] T104 [P0] 实现 10 道科目 A 选择规则
   - 目标: 只选择 `exam_part = 科目A` 的题，最终必须正好 10 道；不足 10 道时失败。
   - 验证: 候选题不足时返回非 0，不调用 OpenAI 补题。
 

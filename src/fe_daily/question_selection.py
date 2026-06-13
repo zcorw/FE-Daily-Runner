@@ -3,6 +3,10 @@ from dataclasses import dataclass
 from typing import Any
 
 
+class InsufficientQuestionsError(RuntimeError):
+    pass
+
+
 @dataclass(frozen=True)
 class FocusTarget:
     label: str
@@ -51,3 +55,30 @@ def build_candidate_search_payloads(targets: list[FocusTarget]) -> list[dict[str
             }
         )
     return payloads
+
+
+def select_subject_a_questions(
+    candidate_groups: list[list[dict[str, Any]]],
+    *,
+    required_count: int = 10,
+) -> list[dict[str, Any]]:
+    selected: list[dict[str, Any]] = []
+    seen_urls: set[str] = set()
+
+    for group in candidate_groups:
+        for question in group:
+            if question.get("examPart") != "科目A":
+                continue
+            url = question.get("url")
+            if not isinstance(url, str) or not url:
+                continue
+            if url in seen_urls:
+                continue
+            selected.append(question)
+            seen_urls.add(url)
+            if len(selected) == required_count:
+                return selected
+
+    raise InsufficientQuestionsError(
+        f"needed {required_count} 科目A questions, found {len(selected)}"
+    )

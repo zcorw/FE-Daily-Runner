@@ -2,8 +2,10 @@ import pytest
 
 from fe_daily.question_selection import (
     FocusTarget,
+    InsufficientQuestionsError,
     build_candidate_search_payloads,
     parse_practice_focus,
+    select_subject_a_questions,
 )
 
 
@@ -43,3 +45,54 @@ def test_build_candidate_search_payloads_use_runtime_api_shape():
 def test_build_candidate_search_payloads_rejects_non_positive_counts():
     with pytest.raises(ValueError):
         build_candidate_search_payloads([FocusTarget(label="SQL", count=0)])
+
+
+def test_select_subject_a_questions_returns_exactly_required_count():
+    candidates = [
+        {"url": f"https://example.test/q{i}", "examPart": "科目A"}
+        for i in range(12)
+    ]
+
+    selected = select_subject_a_questions([candidates], required_count=10)
+
+    assert len(selected) == 10
+    assert selected == candidates[:10]
+
+
+def test_select_subject_a_questions_filters_non_subject_a_and_dedupes_urls():
+    group_one = [
+        {"url": "https://example.test/q1", "examPart": "科目A"},
+        {"url": "https://example.test/q2", "examPart": "科目B"},
+        {"url": "https://example.test/q1", "examPart": "科目A"},
+    ]
+    group_two = [
+        {"url": f"https://example.test/q{i}", "examPart": "科目A"}
+        for i in range(3, 12)
+    ]
+
+    selected = select_subject_a_questions([group_one, group_two], required_count=10)
+
+    assert [question["url"] for question in selected] == [
+        "https://example.test/q1",
+        "https://example.test/q3",
+        "https://example.test/q4",
+        "https://example.test/q5",
+        "https://example.test/q6",
+        "https://example.test/q7",
+        "https://example.test/q8",
+        "https://example.test/q9",
+        "https://example.test/q10",
+        "https://example.test/q11",
+    ]
+
+
+def test_select_subject_a_questions_fails_when_fewer_than_required():
+    candidates = [
+        {"url": "https://example.test/q1", "examPart": "科目A"},
+        {"url": "https://example.test/q2", "examPart": "科目B"},
+    ]
+
+    with pytest.raises(InsufficientQuestionsError) as exc_info:
+        select_subject_a_questions([candidates], required_count=10)
+
+    assert "needed 10 科目A questions, found 1" in str(exc_info.value)
