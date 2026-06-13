@@ -26,6 +26,46 @@ def load_study_plan_entry(plan_path: str | Path, target_date: date) -> StudyPlan
     return None
 
 
+def select_study_plan_entry(
+    plan_path: str | Path,
+    target_date: date,
+    *,
+    weak_points: str,
+    mistake_log: str,
+    recent_progress: str,
+) -> StudyPlanEntry:
+    planned_entry = load_study_plan_entry(plan_path, target_date)
+    if planned_entry is not None:
+        return planned_entry
+
+    return build_fallback_plan_entry(
+        target_date,
+        weak_points=weak_points,
+        mistake_log=mistake_log,
+        recent_progress=recent_progress,
+    )
+
+
+def build_fallback_plan_entry(
+    target_date: date,
+    *,
+    weak_points: str,
+    mistake_log: str,
+    recent_progress: str,
+) -> StudyPlanEntry:
+    topic = _first_context_item(weak_points) or _first_context_item(mistake_log) or _first_context_item(recent_progress)
+    if topic is None:
+        topic = "Mixed FE review"
+
+    return StudyPlanEntry(
+        date=target_date,
+        main_theme=topic,
+        reading_assignment="No scheduled June plan. Review weak points, mistake log, and recent progress.",
+        practice_focus=f"{topic} 10",
+        plan_source="fallback",
+    )
+
+
 def _parse_markdown_table(markdown: str) -> list[dict[str, str]]:
     headers: list[str] | None = None
     rows: list[dict[str, str]] = []
@@ -52,3 +92,11 @@ def _parse_markdown_table(markdown: str) -> list[dict[str, str]]:
 
 def _is_separator_row(cells: list[str]) -> bool:
     return all(cell.replace(":", "").replace("-", "").strip() == "" for cell in cells)
+
+
+def _first_context_item(text: str) -> str | None:
+    for line in text.splitlines():
+        item = line.strip().lstrip("-*").strip()
+        if item:
+            return item
+    return None

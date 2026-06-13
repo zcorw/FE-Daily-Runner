@@ -21,7 +21,7 @@
   - 目标: 从学习计划表读取当天 `Date`、`Main Theme`、`20-Minute Reading Assignment`、`Practice Focus`。
   - 验证: `2026-06-13` 返回 `データベース: 集計・結合` 和 SQL join/group 分布。
 
-- [ ] T403 [P0] 实现计划缺失 fallback
+- [x] T403 [P0] 实现计划缺失 fallback
   - 目标: 当天计划不存在时，基于 weak points、mistake log、recent progress 选择主题，并在日志写 `plan_source=fallback`。
   - 验证: 无计划日期生成 fallback 上下文，但不替换已有计划日期主题。
 

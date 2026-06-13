@@ -1,6 +1,6 @@
 from datetime import date
 
-from fe_daily.study_plan import load_study_plan_entry
+from fe_daily.study_plan import build_fallback_plan_entry, load_study_plan_entry, select_study_plan_entry
 
 
 def test_load_study_plan_entry_reads_june_plan_row(tmp_path):
@@ -41,3 +41,68 @@ def test_load_study_plan_entry_returns_none_for_missing_date(tmp_path):
     )
 
     assert load_study_plan_entry(plan_path, date(2026, 6, 13)) is None
+
+
+def test_select_study_plan_entry_uses_existing_plan_before_fallback(tmp_path):
+    plan_path = tmp_path / "june-study-plan.md"
+    plan_path.write_text(
+        "\n".join(
+            [
+                "| Date | Main Theme | 20-Minute Reading Assignment | Practice Focus |",
+                "|---|---|---|---|",
+                "| 2026-06-13 | データベース: 集計・結合 | Ch.4.3 SQL p.129-133 | SQL join/group 10 |",
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    entry = select_study_plan_entry(
+        plan_path,
+        date(2026, 6, 13),
+        weak_points="- Network routing",
+        mistake_log="- Transaction isolation",
+        recent_progress="- Practiced security",
+    )
+
+    assert entry.main_theme == "データベース: 集計・結合"
+    assert entry.plan_source == "june-study-plan"
+
+
+def test_select_study_plan_entry_falls_back_when_date_missing(tmp_path):
+    plan_path = tmp_path / "june-study-plan.md"
+    plan_path.write_text(
+        "\n".join(
+            [
+                "| Date | Main Theme | 20-Minute Reading Assignment | Practice Focus |",
+                "|---|---|---|---|",
+                "| 2026-06-12 | Network | Ch.5 p.1-6 | network 10 |",
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    entry = select_study_plan_entry(
+        plan_path,
+        date(2026, 6, 13),
+        weak_points="- SQL aggregation mistakes",
+        mistake_log="- GROUP BY vs WHERE",
+        recent_progress="- Finished database normalization",
+    )
+
+    assert entry.date == date(2026, 6, 13)
+    assert entry.plan_source == "fallback"
+    assert "SQL aggregation mistakes" in entry.main_theme
+    assert "weak points" in entry.reading_assignment
+    assert entry.practice_focus == "SQL aggregation mistakes 10"
+
+
+def test_build_fallback_plan_entry_uses_mistake_log_when_weak_points_empty():
+    entry = build_fallback_plan_entry(
+        date(2026, 6, 13),
+        weak_points="",
+        mistake_log="- Transaction isolation",
+        recent_progress="- Practiced security",
+    )
+
+    assert entry.plan_source == "fallback"
+    assert entry.main_theme == "Transaction isolation"
