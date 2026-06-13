@@ -20,7 +20,7 @@
   - 目标: 缺少 `TELEGRAM_BOT_TOKEN` 或 `TELEGRAM_CHAT_ID` 时记录 skipped，不失败。
   - 验证: `--notify` 在页面生成成功但缺少 Telegram 配置时退出 0，日志写 `Telegram skipped: missing env`。
 
-- [ ] T503 [P0] 限制 notify 只能在 write 成功后执行
+- [x] T503 [P0] 限制 notify 只能在 write 成功后执行
   - 目标: 如果页面写入、校验、状态更新任一步失败，不发送成功通知。
   - 验证: 模拟页面校验失败时 Telegram 不被调用。
 

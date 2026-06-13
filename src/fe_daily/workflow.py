@@ -18,6 +18,7 @@ from fe_daily.question_selection import (
     select_subject_a_questions,
 )
 from fe_daily.study_plan import StudyPlanEntry, select_study_plan_entry
+from fe_daily.telegram_notifier import TelegramNotifier, render_telegram_message
 
 
 class WorkflowQuestionClient(Protocol):
@@ -42,6 +43,11 @@ class WorkflowGenerator(Protocol):
         pass
 
 
+class WorkflowNotifier(Protocol):
+    def send_html_message(self, html: str) -> Any:
+        pass
+
+
 @dataclass(frozen=True)
 class WorkflowResult:
     status: str
@@ -62,6 +68,7 @@ def run_daily_workflow(
     recent_progress: str,
     question_client: WorkflowQuestionClient,
     generator: WorkflowGenerator,
+    telegram_notifier: WorkflowNotifier | None = None,
 ) -> WorkflowResult:
     target_paths = output_targets(settings.output_dir, target_date)
     if run_mode in (RunMode.WRITE, RunMode.NOTIFY):
@@ -135,6 +142,19 @@ def run_daily_workflow(
             settings.telegram_bot_token is None or settings.telegram_chat_id is None
         ):
             notification_status = "skipped: missing env"
+        elif run_mode is RunMode.NOTIFY:
+            notifier = telegram_notifier or TelegramNotifier(
+                bot_token=settings.telegram_bot_token.get_secret_value(),
+                chat_id=settings.telegram_chat_id.get_secret_value(),
+            )
+            message = render_telegram_message(
+                date=target_date.isoformat(),
+                main_theme=content.main_theme,
+                page_url=_absolute_page_url(settings, page_url),
+                template_dir=settings.template_dir,
+            )
+            send_result = notifier.send_html_message(message)
+            notification_status = getattr(send_result, "status", "sent")
         return WorkflowResult(
             status="success",
             target_date=target_date,
@@ -162,3 +182,9 @@ def _expected_plan(plan_entry: StudyPlanEntry) -> dict[str, Any]:
         "reading_assignment": plan_entry.reading_assignment,
         "practice_focus": plan_entry.practice_focus,
     }
+
+
+def _absolute_page_url(settings: DailyRunnerSettings, page_url: str) -> str:
+    if settings.page_base_url is None:
+        return page_url
+    return settings.page_base_url.rstrip("/") + page_url

@@ -93,6 +93,22 @@ class FakeGenerator:
         )
 
 
+class InvalidGenerator(FakeGenerator):
+    def generate(self, payload: dict[str, Any]) -> DailyLearningContent:
+        content = super().generate(payload)
+        content.terms = content.terms[:9]
+        return content
+
+
+class FakeNotifier:
+    def __init__(self) -> None:
+        self.call_count = 0
+
+    def send_html_message(self, html: str) -> object:
+        self.call_count += 1
+        return object()
+
+
 def test_run_daily_workflow_dry_run_uses_full_chain_without_formal_write(tmp_path):
     plan_path = tmp_path / "june-study-plan.md"
     plan_path.write_text(
@@ -264,3 +280,34 @@ def test_run_daily_workflow_notify_skips_missing_telegram_config_after_write(tmp
     assert result.status == "success"
     assert result.notification_status == "skipped: missing env"
     assert daily_page_path(settings.output_dir, date(2026, 6, 13)).exists()
+
+
+def test_run_daily_workflow_notify_does_not_send_when_validation_fails(tmp_path):
+    plan_path = tmp_path / "june-study-plan.md"
+    write_plan(plan_path)
+    settings = load_settings(
+        _env_file=None,
+        output_dir=tmp_path / "site",
+        template_dir=ROOT / "templates",
+        existing_page_policy=ExistingPagePolicy.OVERWRITE,
+        telegram_bot_token="telegram-token",
+        telegram_chat_id="123",
+    )
+    notifier = FakeNotifier()
+
+    with pytest.raises(ValueError):
+        run_daily_workflow(
+            settings=settings,
+            target_date=date(2026, 6, 13),
+            run_mode=RunMode.NOTIFY,
+            plan_path=plan_path,
+            weak_points="- SQL",
+            mistake_log="- GROUP BY",
+            recent_progress="- DB",
+            question_client=FakeQuestionClient(),
+            generator=InvalidGenerator(),
+            telegram_notifier=notifier,
+        )
+
+    assert notifier.call_count == 0
+    assert not daily_page_path(settings.output_dir, date(2026, 6, 13)).exists()
