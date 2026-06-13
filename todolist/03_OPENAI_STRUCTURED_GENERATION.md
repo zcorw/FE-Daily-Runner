@@ -35,7 +35,7 @@
   - 目标: 校验至少 10 个重点术语、约 60 分钟时间表、当天 Main Theme、当天 20-Minute Reading Assignment、明日建议。
   - 验证: 输出不匹配当天计划时失败。
 
-- [ ] T207 [P1] 保存 dry-run 调试 JSON
+- [x] T207 [P1] 保存 dry-run 调试 JSON
   - 目标: dry-run 将 OpenAI 原始输出、校验后 JSON 和页面预览写入临时目录，不写正式页面。
   - 验证: dry-run 后 `site/daily/.../index.html` 不存在，临时预览存在。
 
