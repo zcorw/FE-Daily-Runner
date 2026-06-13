@@ -30,7 +30,7 @@
   - 目标: 使用 `includeAnswer=true` 和 `includeExplanation=true` 获取题干、选项、正解、解说、图片引用、来源 URL。
   - 验证: 每道题详情缺少来源 URL、正解或解说时失败。
 
-- [ ] T106 [P0] 实现图片路径归一化
+- [x] T106 [P0] 实现图片路径归一化
   - 目标: 将题库返回或 Markdown 中的图片引用统一为 `/assets/fe-siken/<asset-path>`。
   - 验证: 输入 `http://question-bank-runtime:8000/assets/fe-siken/r7/q1.png` 输出 `/assets/fe-siken/r7/q1.png`。
 
