@@ -77,9 +77,11 @@ class FakeGenerator:
 class FakeNotifier:
     def __init__(self) -> None:
         self.call_count = 0
+        self.messages: list[str] = []
 
     def send_html_message(self, html: str) -> object:
         self.call_count += 1
+        self.messages.append(html)
         return object()
 
 
@@ -156,3 +158,45 @@ def test_e2e_write_generates_formal_outputs(tmp_path):
     assert (tmp_path / "state" / "daily_state.json").exists()
     assert (tmp_path / "logs" / "daily_publish" / "2026-06-13.md").exists()
     assert len(soup.select("[data-question]")) == 10
+
+
+def test_e2e_notify_sends_once_after_successful_write(tmp_path):
+    plan_path = tmp_path / "june-study-plan.md"
+    plan_path.write_text(
+        "\n".join(
+            [
+                "| Date | Main Theme | 20-Minute Reading Assignment | Practice Focus |",
+                "|---|---|---|---|",
+                "| 2026-06-13 | データベース: 集計・結合 | Ch.4.3 SQL p.129-133 | SQL 10 |",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    settings = load_settings(
+        _env_file=None,
+        output_dir=tmp_path / "site",
+        template_dir=ROOT / "templates",
+        page_base_url="https://example.test",
+        telegram_bot_token="telegram-token",
+        telegram_chat_id="123",
+    )
+    notifier = FakeNotifier()
+
+    result = run_daily_workflow(
+        settings=settings,
+        target_date=date(2026, 6, 13),
+        run_mode=RunMode.NOTIFY,
+        plan_path=plan_path,
+        weak_points="- SQL",
+        mistake_log="- GROUP BY",
+        recent_progress="- DB",
+        question_client=FakeQuestionClient(),
+        generator=FakeGenerator(),
+        telegram_notifier=notifier,
+    )
+
+    assert result.status == "success"
+    assert notifier.call_count == 1
+    assert "2026-06-13" in notifier.messages[0]
+    assert "データベース: 集計・結合" in notifier.messages[0]
+    assert "https://example.test/daily/2026-06-13/" in notifier.messages[0]

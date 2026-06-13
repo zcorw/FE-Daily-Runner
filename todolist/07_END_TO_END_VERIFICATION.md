@@ -22,7 +22,7 @@
   - 目标: 使用临时输出目录执行 `--write`。
   - 验证: 生成每日页面、首页、progress、state、logs；页面正好 10 道题。
 
-- [ ] T604 [P0] 建立 notify E2E 测试
+- [x] T604 [P0] 建立 notify E2E 测试
   - 目标: 使用 mock Telegram API 执行 `--notify`。
   - 验证: write 成功后发送一次通知；通知包含日期、主题、题目数、页面 URL。
 
