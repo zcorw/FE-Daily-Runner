@@ -34,3 +34,12 @@ def test_readme_documents_browser_image_proxy_boundary():
     assert "/assets/fe-siken/" in text
     assert "browser-facing image paths" in text
     assert "must not expose `http://question-bank-runtime:8000/`" in text
+
+
+def test_readme_documents_operations_schedule_and_logs():
+    text = README.read_text(encoding="utf-8")
+
+    assert "OPENAI_API_KEY" in text
+    assert "TELEGRAM_BOT_TOKEN" in text
+    assert "cron" in text
+    assert "logs/daily_publish/" in text

@@ -28,7 +28,7 @@
   - 目标: 如果 Telegram 配置存在，题库服务不可用、OpenAI 校验失败、页面写入失败时发送失败通知。
   - 验证: 失败通知不包含 secret，只包含日期、阶段、错误摘要。
 
-- [ ] T505 [P1] 生成部署运行文档
+- [x] T505 [P1] 生成部署运行文档
   - 目标: README 说明 Docker network `fe-shared`、环境变量、cron 或容器定时任务、health check、日志路径。
   - 验证: README 包含 `docker network create fe-shared` 和容器内 `curl /health` 验证步骤。
 

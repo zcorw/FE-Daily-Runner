@@ -114,6 +114,33 @@ Optional Runtime API smoke test:
 RUN_RUNTIME_SMOKE=1 QUESTION_BANK_SERVICE_URL=http://question-bank-runtime:8000 python -m pytest tests/test_runtime_smoke.py
 ```
 
+## Operations
+
+Required and optional environment variables:
+
+```env
+OPENAI_API_KEY=...
+QUESTION_BANK_SERVICE_URL=http://question-bank-runtime:8000
+PAGE_BASE_URL=https://example.com
+TELEGRAM_BOT_TOKEN=...
+TELEGRAM_CHAT_ID=...
+```
+
+Run from cron or a container scheduler with one command per day:
+
+```cron
+10 6 * * * cd /app && python scripts/daily_publish.py --today --write
+15 6 * * * cd /app && python scripts/daily_publish.py --today --notify
+```
+
+Operational logs are written under:
+
+```text
+logs/daily_publish/
+```
+
+Use `python scripts/daily_publish.py --health-check` or run `curl -fsS http://question-bank-runtime:8000/health` inside the consumer container before enabling the schedule.
+
 ## Browser Image Proxy
 
 Generated pages use browser-facing image paths under `/assets/fe-siken/`.
