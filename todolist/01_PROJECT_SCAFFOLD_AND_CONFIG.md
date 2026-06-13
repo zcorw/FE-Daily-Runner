@@ -18,7 +18,7 @@
   - 目标: 声明 Python 3.11+、包名、测试配置、格式化和核心依赖入口。
   - 验证: `python -m pip install -e .` 或 `uv sync` 成功；`python -c "import fe_daily"` 成功。
 
-- [ ] T003 [P0] 实现配置读取
+- [x] T003 [P0] 实现配置读取
   - 目标: 从环境变量和 `.env` 读取运行配置，覆盖 `QUESTION_BANK_SERVICE_URL`、OpenAI 模型参数、输出目录、模板目录、运行模式、已有页面策略、Telegram 可选配置。
   - 验证: 配置测试覆盖默认值、缺失必填项、枚举非法值、secret 不进入 `repr` 或日志。
 
