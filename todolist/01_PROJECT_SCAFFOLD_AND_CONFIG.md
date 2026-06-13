@@ -14,7 +14,7 @@
   - 目标: 建立 `src/fe_daily/`、`scripts/`、`tests/`、`templates/`、`config/`、`site/`、`state/`、`logs/daily_publish/` 等目录。
   - 验证: `python -m pytest` 能发现测试目录，空测试或基础导入测试通过。
 
-- [ ] T002 [P0] 添加 `pyproject.toml`
+- [x] T002 [P0] 添加 `pyproject.toml`
   - 目标: 声明 Python 3.11+、包名、测试配置、格式化和核心依赖入口。
   - 验证: `python -m pip install -e .` 或 `uv sync` 成功；`python -c "import fe_daily"` 成功。
 
