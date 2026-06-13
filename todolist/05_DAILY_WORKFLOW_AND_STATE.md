@@ -33,7 +33,7 @@
   - 目标: `--write` 和 `--notify` 成功后追加或更新当天进度，保留主题、题量、收获、易错点、明日建议、页面。
   - 验证: 重复运行同一天不重复追加，或按配置覆盖。
 
-- [ ] T406 [P0] 实现状态文件更新
+- [x] T406 [P0] 实现状态文件更新
   - 目标: 写 `state/daily_state.json`，并可兼容 `.codex/daily_state.json`。
   - 验证: 状态包含 `last_run_date`、`last_daily_page`、`last_topics`、`last_question_count`、`status`。
 
