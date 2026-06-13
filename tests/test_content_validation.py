@@ -1,11 +1,14 @@
 import pytest
+from bs4 import BeautifulSoup
 
 from fe_daily.content_validation import (
     ContentValidationError,
+    validate_daily_html,
     validate_learning_content_quality,
     validate_question_facts,
 )
 from fe_daily.output_schema import DailyLearningContent
+from fe_daily.page_renderer import render_daily_page
 
 
 def runtime_detail():
@@ -45,6 +48,49 @@ def generated_content(**question_overrides):
             "tomorrow_suggestion": {"theme": "Transaction"},
         }
     )
+
+
+def generated_page_content() -> DailyLearningContent:
+    base_question = {
+        "source_url": "https://example.test/q1",
+        "question_text": "Question text",
+        "choices": {"A": "Alpha", "B": "Beta"},
+        "answer": "A",
+        "explanation": "Explanation",
+        "images": [{"publicPath": "/assets/fe-siken/r7/q1.png"}],
+    }
+    return DailyLearningContent.model_validate(
+        {
+            "date": "2026-06-13",
+            "title": "Daily FE Study",
+            "main_theme": "SQL",
+            "plan_reference": {
+                "date": "2026-06-13",
+                "reading_assignment": "Ch.4.3 SQL p.129-133",
+                "practice_focus": "SQL 10",
+            },
+            "goals": ["Practice"],
+            "time_table": [{"minutes": 60, "task": "Practice"}],
+            "terms": [{"term": f"term-{index}", "meaning": "meaning"} for index in range(10)],
+            "knowledge_points": [{"title": "SQL", "body": "Group rows."}],
+            "questions": [
+                {
+                    **base_question,
+                    "source_url": f"https://example.test/q{index}",
+                    "question_text": f"Question {index}",
+                    "explanation": f"Explanation {index}",
+                    "images": [{"publicPath": f"/assets/fe-siken/r7/q{index}.png"}],
+                }
+                for index in range(1, 11)
+            ],
+            "review_table_template": [{"question_no": index} for index in range(1, 11)],
+            "tomorrow_suggestion": {"theme": "Transaction"},
+        }
+    )
+
+
+def rendered_daily_html(content: DailyLearningContent | None = None) -> str:
+    return render_daily_page(content or generated_page_content(), page_url="/daily/2026-06-13/")
 
 
 def test_validate_question_facts_accepts_matching_runtime_details():
@@ -120,3 +166,49 @@ def test_validate_learning_content_quality_requires_tomorrow_suggestion():
         validate_learning_content_quality(content, expected_plan())
 
     assert "tomorrow_suggestion" in str(exc_info.value)
+
+
+def test_validate_daily_html_accepts_matching_page():
+    content = generated_page_content()
+
+    validate_daily_html(rendered_daily_html(content), content, page_url="/daily/2026-06-13/")
+
+
+@pytest.mark.parametrize(
+    ("field", "broken_html"),
+    [
+        ("date", lambda html: html.replace('data-date="2026-06-13"', 'data-date="2026-06-14"')),
+        ("page_url", lambda html: html.replace('/daily/2026-06-13/', '/daily/2026-06-14/')),
+        ("main_theme", lambda html: html.replace("<h1>SQL</h1>", "<h1>Network</h1>")),
+        (
+            "reading_assignment",
+            lambda html: html.replace("Ch.4.3 SQL p.129-133", "Ch.5 Network p.1-10"),
+        ),
+        ("source_url", lambda html: html.replace("https://example.test/q1", "https://example.test/changed")),
+        ("answer", lambda html: html.replace("Answer: A", "Answer: B", 1)),
+        ("explanation", lambda html: html.replace("Explanation 1", "Changed explanation")),
+        (
+            "image",
+            lambda html: html.replace("/assets/fe-siken/r7/q1.png", "question-bank-runtime/r7/q1.png"),
+        ),
+        ("secret", lambda html: html + " OPENAI_API_KEY=abc123"),
+    ],
+)
+def test_validate_daily_html_rejects_invalid_page_rules(field, broken_html):
+    content = generated_page_content()
+
+    with pytest.raises(ContentValidationError) as exc_info:
+        validate_daily_html(broken_html(rendered_daily_html(content)), content, page_url="/daily/2026-06-13/")
+
+    assert field in str(exc_info.value)
+
+
+def test_validate_daily_html_requires_exactly_10_questions():
+    content = generated_page_content()
+    soup = BeautifulSoup(rendered_daily_html(content), "html.parser")
+    soup.select_one("[data-question]").decompose()
+
+    with pytest.raises(ContentValidationError) as exc_info:
+        validate_daily_html(str(soup), content, page_url="/daily/2026-06-13/")
+
+    assert "question count" in str(exc_info.value)

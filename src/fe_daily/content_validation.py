@@ -1,5 +1,7 @@
 from typing import Any
 
+from bs4 import BeautifulSoup
+
 from fe_daily.output_schema import DailyLearningContent
 
 
@@ -75,3 +77,67 @@ def validate_learning_content_quality(
 
     if not content.tomorrow_suggestion:
         raise ContentValidationError("tomorrow_suggestion must not be empty")
+
+
+def validate_daily_html(
+    html: str,
+    content: DailyLearningContent,
+    *,
+    page_url: str,
+) -> None:
+    _validate_no_secret_leakage(html)
+    soup = BeautifulSoup(html, "html.parser")
+
+    page = soup.select_one('article[data-page-type="daily"]')
+    if page is None:
+        raise ContentValidationError("daily page article is missing")
+
+    expected_date = content.date.isoformat()
+    if page.get("data-date") != expected_date:
+        raise ContentValidationError(f"date mismatch: expected {expected_date}")
+
+    if page.get("data-page-url") != page_url:
+        raise ContentValidationError(f"page_url mismatch: expected {page_url}")
+
+    heading = page.find("h1")
+    if heading is None or heading.get_text(strip=True) != content.main_theme:
+        raise ContentValidationError("main_theme mismatch in rendered HTML")
+
+    reading_section = soup.select_one('[data-section="reading-assignment"]')
+    if reading_section is None or content.plan_reference.reading_assignment not in reading_section.get_text(" ", strip=True):
+        raise ContentValidationError("reading_assignment missing from rendered HTML")
+
+    rendered_questions = soup.select('[data-section="questions"] [data-question]')
+    if len(rendered_questions) != 10 or len(content.questions) != 10:
+        raise ContentValidationError(
+            f"question count must be exactly 10: rendered {len(rendered_questions)}, content {len(content.questions)}"
+        )
+
+    for index, (rendered, expected) in enumerate(zip(rendered_questions, content.questions, strict=True), start=1):
+        rendered_text = rendered.get_text(" ", strip=True)
+        if expected.question_text not in rendered_text:
+            raise ContentValidationError(f"question {index} question_text missing")
+        if f"Answer: {expected.answer}" not in rendered_text:
+            raise ContentValidationError(f"question {index} answer mismatch")
+        if expected.explanation not in rendered_text:
+            raise ContentValidationError(f"question {index} explanation missing")
+
+        source = rendered.find("a", href=True)
+        expected_source = str(expected.source_url).rstrip("/")
+        if source is None or source["href"].rstrip("/") != expected_source:
+            raise ContentValidationError(f"question {index} source_url mismatch")
+
+    _validate_image_paths(soup)
+
+
+def _validate_no_secret_leakage(html: str) -> None:
+    secret_markers = ("OPENAI_API_KEY", "API_KEY", "SECRET", "TOKEN", ".env")
+    if any(marker in html for marker in secret_markers):
+        raise ContentValidationError("secret leakage detected in rendered HTML")
+
+
+def _validate_image_paths(soup: BeautifulSoup) -> None:
+    for image in soup.find_all("img"):
+        source = image.get("src", "")
+        if not source.startswith("/assets/fe-siken/"):
+            raise ContentValidationError(f"image path is not public: {source}")

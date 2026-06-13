@@ -50,11 +50,14 @@ def load_template_environment(template_dir: str | Path) -> Environment:
 def render_daily_page(
     content: DailyLearningContent,
     *,
+    page_url: str | None = None,
     template_dir: str | Path = DEFAULT_TEMPLATE_DIR,
 ) -> str:
     environment = load_template_environment(template_dir)
     template = environment.get_template("daily_page.html.j2")
-    return template.render(**_template_context(content))
+    context = _template_context(content)
+    context["page_url"] = page_url or f"/daily/{context['date']}/"
+    return template.render(**context)
 
 
 def render_index_page(
