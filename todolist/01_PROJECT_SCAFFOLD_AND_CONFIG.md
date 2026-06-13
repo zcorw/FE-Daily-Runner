@@ -26,7 +26,7 @@
   - 目标: 支持 `--date YYYY-MM-DD`、`--today`、`--dry-run`、`--write`、`--notify`、`--health-check`、`--validate-config`、`--render-only --input <json>`。
   - 验证: CLI 单元测试确认互斥参数和退出码；`--validate-config` 在缺少 OpenAI key 时明确失败或标记 dry-run 限制。
 
-- [ ] T005 [P0] 固化运行模式语义
+- [x] T005 [P0] 固化运行模式语义
   - 目标: 明确定义 `dry-run` 只写临时预览、`write` 写正式页面和状态、`notify` 在成功 `write` 后通知。
   - 验证: 测试覆盖三种模式的允许写入路径和 Telegram 行为。
 
