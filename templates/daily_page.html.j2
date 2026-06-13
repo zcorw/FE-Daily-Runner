@@ -1,0 +1,10 @@
+{% extends "base.html.j2" %}
+
+{% block title %}{{ date }} FE Daily{% endblock %}
+
+{% block content %}
+<article data-page-type="daily" data-date="{{ date }}">
+  <h1>{{ main_theme }}</h1>
+  {% block daily_content %}{% endblock %}
+</article>
+{% endblock %}

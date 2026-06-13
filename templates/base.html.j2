@@ -1,0 +1,16 @@
+<!doctype html>
+<html lang="{{ page_language | default('ja') }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}FE Daily{% endblock %}</title>
+</head>
+<body>
+  <header>
+    <a href="/">FE Daily</a>
+  </header>
+  <main>
+    {% block content %}{% endblock %}
+  </main>
+</body>
+</html>
