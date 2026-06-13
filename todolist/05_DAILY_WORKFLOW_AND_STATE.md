@@ -29,7 +29,7 @@
   - 目标: 串联 health check、计划读取、候选题选择、详情获取、OpenAI 生成、schema 校验、页面渲染、内容校验、写入。
   - 验证: mock 全链路 dry-run 成功且不写正式页面。
 
-- [ ] T405 [P0] 实现 `personal/progress.md` 更新
+- [x] T405 [P0] 实现 `personal/progress.md` 更新
   - 目标: `--write` 和 `--notify` 成功后追加或更新当天进度，保留主题、题量、收获、易错点、明日建议、页面。
   - 验证: 重复运行同一天不重复追加，或按配置覆盖。
 
