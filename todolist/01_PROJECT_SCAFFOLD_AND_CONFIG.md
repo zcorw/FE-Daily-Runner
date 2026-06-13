@@ -38,7 +38,7 @@
   - 目标: 新应用容器可加入 external Docker network `fe-shared`，默认 `QUESTION_BANK_SERVICE_URL=http://question-bank-runtime:8000`。
   - 验证: `docker compose config` 成功；配置中不出现容器内访问 `localhost` 的题库 URL。
 
-- [ ] T008 [P1] 编写 README 初始运行说明
+- [x] T008 [P1] 编写 README 初始运行说明
   - 目标: 说明本项目是 Runtime API consumer，不读取本地 SQLite 或本地图库，不使用 Git commit/push 发布。
   - 验证: README 包含 dry-run/write/notify 示例和 Docker 网络验证命令。
 
