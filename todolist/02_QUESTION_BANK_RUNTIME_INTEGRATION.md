@@ -38,7 +38,7 @@
   - 目标: 明确静态 HTML 中只输出 `/assets/fe-siken/...`，由消费端或反向代理代理到 Runtime API。
   - 验证: 文档和配置中有 `/assets/fe-siken/` 代理说明；页面中不暴露 Docker 内部 URL。
 
-- [ ] T108 [P1] 添加 Runtime API 集成 smoke test
+- [x] T108 [P1] 添加 Runtime API 集成 smoke test
   - 目标: 在 Docker 网络内验证 `QUESTION_BANK_SERVICE_URL=http://question-bank-runtime:8000` 可访问。
   - 验证: `docker exec <consumer-container> curl -fsS http://question-bank-runtime:8000/health` 成功。
 

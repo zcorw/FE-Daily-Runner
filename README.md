@@ -108,6 +108,12 @@ docker exec <consumer-container> curl -fsS http://question-bank-runtime:8000/hea
 
 Do not use `localhost` from inside the container to reach the question bank service.
 
+Optional Runtime API smoke test:
+
+```bash
+RUN_RUNTIME_SMOKE=1 QUESTION_BANK_SERVICE_URL=http://question-bank-runtime:8000 python -m pytest tests/test_runtime_smoke.py
+```
+
 ## Browser Image Proxy
 
 Generated pages use browser-facing image paths under `/assets/fe-siken/`.
