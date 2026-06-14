@@ -68,6 +68,7 @@ Expected artifacts:
 Optional live smoke checks:
 
 ```bash
+RUN_DOCKER_REAL_RUN_SMOKE=1 OPENAI_API_KEY=<key> python -m pytest tests/test_docker_real_run_smoke.py
 RUN_DOCKER_SMOKE=1 CONSUMER_CONTAINER=<container> python -m pytest tests/test_docker_smoke.py
 RUN_RUNTIME_SMOKE=1 QUESTION_BANK_SERVICE_URL=http://question-bank-runtime:8000 python -m pytest tests/test_runtime_smoke.py
 ```

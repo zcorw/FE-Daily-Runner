@@ -250,7 +250,7 @@ docker compose run --rm fe-daily-runner python scripts/daily_publish.py --today 
   - Verification:
     - README tests assert all real-run commands are documented.
 
-- [ ] T709 [P1] Add optional real Docker run smoke script or test
+- [x] T709 [P1] Add optional real Docker run smoke script or test
   - Goal / outcome: A guarded smoke test can run the actual Docker Compose dry-run with `.env` when real services are available.
   - Implementation notes:
     - Keep opt-in via env var such as `RUN_DOCKER_REAL_RUN_SMOKE=1`.

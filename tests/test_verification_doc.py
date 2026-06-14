@@ -15,5 +15,6 @@ def test_verification_doc_covers_release_checks():
         "--health-check",
         "secret scan",
         "docker network create fe-shared",
+        "RUN_DOCKER_REAL_RUN_SMOKE=1",
     ]:
         assert expected in text
