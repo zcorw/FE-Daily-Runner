@@ -29,6 +29,20 @@ ChoiceMap = Annotated[
         }
     ),
 ]
+QuestionImages = Annotated[
+    list[dict[str, Any]],
+    WithJsonSchema(
+        {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "publicPath": {"type": "string"},
+                },
+            },
+        }
+    ),
+]
 
 Goals = Annotated[list[Any], WithJsonSchema({"type": "array", "items": {"type": "string"}})]
 TimeTable = Annotated[
@@ -123,7 +137,7 @@ class QuestionLearningBlock(BaseModel):
     answer: str = Field(min_length=1)
     explanation: str = Field(min_length=1)
     knowledge_point: str | None = None
-    images: list[dict[str, Any]] = Field(default_factory=list)
+    images: QuestionImages = Field(default_factory=list)
 
     @field_validator("choices", mode="before")
     @classmethod
