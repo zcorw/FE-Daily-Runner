@@ -233,6 +233,7 @@ def _expected_plan(plan_entry: StudyPlanEntry) -> dict[str, Any]:
 
 def _restore_plan_fields(content: DailyLearningContent, plan_entry: StudyPlanEntry) -> None:
     content.date = plan_entry.date
+    content.title = f"FE Daily Study Task - {plan_entry.date.isoformat()}"
     content.main_theme = plan_entry.main_theme
     content.plan_reference.date = plan_entry.date
     content.plan_reference.reading_assignment = plan_entry.reading_assignment

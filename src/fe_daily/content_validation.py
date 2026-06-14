@@ -107,9 +107,12 @@ def validate_daily_html(
     if page.get("data-page-url") != page_url:
         raise ContentValidationError(f"page_url mismatch: expected {page_url}")
 
-    heading = page.find("h1")
-    if heading is None or heading.get_text(strip=True) != content.main_theme:
+    if page.get("data-main-theme") != content.main_theme:
         raise ContentValidationError("main_theme mismatch in rendered HTML")
+
+    heading = page.find("h1")
+    if heading is None or heading.get_text(strip=True) != content.title:
+        raise ContentValidationError("title mismatch in rendered HTML")
 
     reading_section = soup.select_one('[data-section="reading-assignment"]')
     if reading_section is None or content.plan_reference.reading_assignment not in reading_section.get_text(" ", strip=True):
@@ -125,7 +128,8 @@ def validate_daily_html(
         rendered_text = rendered.get_text(" ", strip=True)
         if expected.question_text not in rendered_text:
             raise ContentValidationError(f"question {index} question_text missing")
-        if f"Answer: {expected.answer}" not in rendered_text:
+        answer_text = _question_answer_text(rendered)
+        if answer_text != f"Correct answer: {expected.answer}":
             raise ContentValidationError(f"question {index} answer mismatch")
         if expected.explanation not in rendered_text:
             raise ContentValidationError(f"question {index} explanation missing")
@@ -142,6 +146,14 @@ def _validate_no_secret_leakage(html: str) -> None:
     secret_markers = ("OPENAI_API_KEY", "API_KEY", "SECRET", "TOKEN", ".env")
     if any(marker in html for marker in secret_markers):
         raise ContentValidationError("secret leakage detected in rendered HTML")
+
+
+def _question_answer_text(rendered_question: Any) -> str:
+    for paragraph in rendered_question.find_all("p"):
+        text = paragraph.get_text("", strip=True)
+        if text.startswith("Correct answer:"):
+            return text
+    return ""
 
 
 def _validate_image_paths(soup: BeautifulSoup, allowed_image_prefixes: tuple[str, ...]) -> None:

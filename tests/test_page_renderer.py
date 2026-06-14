@@ -87,6 +87,29 @@ def test_render_daily_page_outputs_required_sections_and_exactly_10_questions():
     assert len(soup.select("[data-question]")) == 10
 
 
+def test_render_daily_page_matches_reference_markdown_section_language():
+    html = render_daily_page(daily_content(), template_dir=ROOT / "templates")
+    soup = BeautifulSoup(html, "html.parser")
+    headings = [heading.get_text(" ", strip=True) for heading in soup.find_all(["h1", "h2", "h3"])]
+    body_text = soup.get_text(" ", strip=True)
+
+    assert headings[:9] == [
+        "Daily FE Study",
+        "Today's Goal",
+        "Time Box",
+        "Book Reading Range",
+        "Study Checklist",
+        "Key Terms",
+        "Knowledge Notes",
+        "Subject-A Practice Questions",
+        "Question 1",
+    ]
+    assert "Correct answer" in body_text
+    assert "Why the other choices are wrong" in body_text
+    assert "Review Area" in headings
+    assert "Tomorrow's Suggestion" in headings
+
+
 def test_render_index_page_links_current_day_once_when_entries_repeat():
     html = render_index_page(
         [

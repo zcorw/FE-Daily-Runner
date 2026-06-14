@@ -207,13 +207,13 @@ def test_validate_daily_html_accepts_matching_page():
     [
         ("date", lambda html: html.replace('data-date="2026-06-13"', 'data-date="2026-06-14"')),
         ("page_url", lambda html: html.replace('/daily/2026-06-13/', '/daily/2026-06-14/')),
-        ("main_theme", lambda html: html.replace("<h1>SQL</h1>", "<h1>Network</h1>")),
+        ("main_theme", lambda html: html.replace('data-main-theme="SQL"', 'data-main-theme="Network"')),
         (
             "reading_assignment",
             lambda html: html.replace("Ch.4.3 SQL p.129-133", "Ch.5 Network p.1-10"),
         ),
         ("source_url", lambda html: html.replace("https://example.test/q1", "https://example.test/changed")),
-        ("answer", lambda html: html.replace("Answer: A", "Answer: B", 1)),
+        ("answer", lambda html: html.replace("<strong>Correct answer</strong>: A", "<strong>Correct answer</strong>: B", 1)),
         ("explanation", lambda html: html.replace("Explanation 1", "Changed explanation")),
         (
             "image",

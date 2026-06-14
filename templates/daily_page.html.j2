@@ -1,96 +1,168 @@
 {% extends "base.html.j2" %}
 
-{% block title %}{{ date }} FE Daily{% endblock %}
+{% block title %}{{ title }}{% endblock %}
 
 {% block content %}
-<article data-page-type="daily" data-date="{{ date }}" data-page-url="{{ page_url }}">
-  <h1>{{ main_theme }}</h1>
+<article data-page-type="daily" data-date="{{ date }}" data-page-url="{{ page_url }}" data-main-theme="{{ main_theme }}">
+  <h1>{{ title }}</h1>
+
   <section data-section="daily-goals">
-    <h2>Today's Goals</h2>
+    <h2>Today's Goal</h2>
     <ul>
+      <li>Main theme: {{ main_theme }}.</li>
+      <li>Plan source: this page follows the {{ date }} row in the configured study plan.</li>
+      <li>Planned reading: <code>{{ plan_reference.reading_assignment }}</code>.</li>
+      <li>Planned practice distribution: <code>{{ plan_reference.practice_focus }}</code>.</li>
       {% for goal in goals %}
       <li>{{ goal }}</li>
       {% endfor %}
+      <li>Estimated study time: about 60 minutes.</li>
     </ul>
   </section>
 
   <section data-section="time-table">
-    <h2>Time Allocation</h2>
-    <ol>
-      {% for item in time_table %}
-      <li>{{ item.minutes }} min{% if item.task is defined %}: {{ item.task }}{% endif %}</li>
-      {% endfor %}
-    </ol>
+    <h2>Time Box</h2>
+    <table>
+      <thead>
+        <tr><th>Time</th><th>Work</th></tr>
+      </thead>
+      <tbody>
+        {% for item in time_table %}
+        <tr>
+          <td>{{ item.minutes }} min</td>
+          <td>{% if item.task is defined %}{{ item.task }}{% else %}Study task{% endif %}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
   </section>
 
   <section data-section="reading-assignment">
-    <h2>20-Minute Reading Assignment</h2>
-    <p>{{ plan_reference.reading_assignment }}</p>
+    <h2>Book Reading Range</h2>
+    <p>This range is taken directly from the study plan row for {{ date }}; it is not expanded to the whole chapter.</p>
+    <table>
+      <thead>
+        <tr><th>Topic</th><th>Section</th><th>Scope</th><th>Pages</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>{{ main_theme }}</td>
+          <td>Planned reading</td>
+          <td>{{ plan_reference.reading_assignment }}</td>
+          <td>{{ plan_reference.reading_assignment }}</td>
+        </tr>
+      </tbody>
+    </table>
   </section>
 
   <section data-section="study-checklist">
     <h2>Study Checklist</h2>
     <ul>
-      <li>{{ plan_reference.practice_focus }}</li>
-      {% for goal in goals %}
-      <li>{{ goal }}</li>
-      {% endfor %}
+      <li><input type="checkbox" disabled> Read the planned book range and mark the important steps.</li>
+      <li><input type="checkbox" disabled> Complete all 10 subject-A questions.</li>
+      <li><input type="checkbox" disabled> For each calculation item, write the formula, place value, or reasoning step.</li>
+      <li><input type="checkbox" disabled> Record every missed item in the review table.</li>
+      <li><input type="checkbox" disabled> Review this planned practice distribution: {{ plan_reference.practice_focus }}.</li>
     </ul>
   </section>
 
   <section data-section="terms">
-    <h2>Terms</h2>
-    <dl>
-      {% for item in terms %}
-      <dt>{{ item.term }}</dt>
-      <dd>{{ item.meaning }}</dd>
-      {% endfor %}
-    </dl>
+    <h2>Key Terms</h2>
+    <table>
+      <thead>
+        <tr><th>Term</th><th>Meaning</th><th>Exam-oriented note</th><th>Trap</th></tr>
+      </thead>
+      <tbody>
+        {% for item in terms %}
+        <tr>
+          <td>{{ item.term }}</td>
+          <td>{{ item.meaning }}</td>
+          <td>{% if item.exam_note is defined %}{{ item.exam_note }}{% else %}Connect this term to the planned practice topic.{% endif %}</td>
+          <td>{% if item.trap is defined %}{{ item.trap }}{% else %}Do not confuse the term with a neighboring concept.{% endif %}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
   </section>
 
   <section data-section="knowledge-points">
-    <h2>Knowledge Points</h2>
+    <h2>Knowledge Notes</h2>
     {% for point in knowledge_points %}
-    <section>
-      <h3>{{ point.title }}</h3>
-      <p>{{ point.body }}</p>
-    </section>
+    <p><strong>{{ point.title }}.</strong> {{ point.body }}</p>
     {% endfor %}
   </section>
 
   <section data-section="questions">
-    <h2>Subject A Practice Questions</h2>
+    <h2>Subject-A Practice Questions</h2>
+    <p>Today's question distribution: {{ plan_reference.practice_focus }}</p>
     {% for question in questions %}
     <article data-question="{{ loop.index }}">
       <h3>Question {{ loop.index }}</h3>
+      <ul>
+        <li>Source type: <code>{% if question.source_type is defined %}{{ question.source_type }}{% else %}DB index / cached question_details{% endif %}</code></li>
+        <li>Source URL: <a href="{{ question.source_url }}">{{ question.source_url }}</a></li>
+        <li>Source exam: {% if question.source_exam is defined %}{{ question.source_exam }}{% else %}Runtime question bank{% endif %}</li>
+        <li>Syllabus area: {% if question.syllabus_area is defined %}{{ question.syllabus_area }}{% else %}Subject A{% endif %}</li>
+        <li>Tested point: {% if question.knowledge_point %}{{ question.knowledge_point }}{% else %}{{ main_theme }}{% endif %}</li>
+        <li>Planned bucket: {% if question.planned_bucket is defined %}{{ question.planned_bucket }}{% else %}{{ main_theme }}{% endif %}</li>
+      </ul>
+
+      <p><strong>Question</strong></p>
       <p>{{ question.question_text }}</p>
       {% for image in question.images %}
-      <img src="{{ image.publicPath }}" alt="Question {{ loop.index }} reference image">
+      <p><img src="{{ image.publicPath }}" alt="{% if image.alt is defined %}{{ image.alt }}{% else %}Question {{ loop.index }} reference image{% endif %}"></p>
       {% endfor %}
-      <ol type="A">
+
+      <p><strong>Choices</strong></p>
+      <ul>
         {% for key, value in question.choices.items() %}
-        <li><strong>{{ key }}</strong>: {{ value }}</li>
+        <li>{{ key }} {{ value }}</li>
         {% endfor %}
-      </ol>
-      <p>Answer: {{ question.answer }}</p>
+      </ul>
+
+      <p><strong>Correct answer</strong>: {{ question.answer }}</p>
+      <p><strong>Explanation</strong></p>
       <p>{{ question.explanation }}</p>
-      <p><a href="{{ question.source_url }}">Source</a></p>
+      <p><strong>Key terms</strong>: {% if question.knowledge_point %}{{ question.knowledge_point }}, {% endif %}{{ main_theme }}</p>
+      <p><strong>Why the other choices are wrong</strong></p>
+      <ul>
+        {% for key, value in question.choices.items() %}
+        {% if key != question.answer %}
+        <li>{{ key }} This option does not match the required concept, calculation step, or exam condition.</li>
+        {% endif %}
+        {% endfor %}
+      </ul>
     </article>
     {% endfor %}
   </section>
 
   <section data-section="review">
-    <h2>Review</h2>
+    <h2>Review Area</h2>
+    <p>Mistake reason options:</p>
     <ul>
-      {% for item in review_table_template %}
-      <li>Question {{ item.question_no }}</li>
-      {% endfor %}
+      <li>Unknown term</li>
+      <li>Concept unclear</li>
+      <li>Formula not memorized</li>
+      <li>Misread the question</li>
+      <li>Confused choices</li>
+      <li>Non-technical domain knowledge gap</li>
+      <li>Careless error</li>
     </ul>
+    <table>
+      <thead>
+        <tr><th>Question</th><th>Correct?</th><th>Mistake reason</th><th>Knowledge point to review</th></tr>
+      </thead>
+      <tbody>
+        {% for item in review_table_template %}
+        <tr><td>Question {{ item.question_no }}</td><td></td><td></td><td></td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
   </section>
 
   <section data-section="tomorrow">
-    <h2>Tomorrow</h2>
-    <p>{{ tomorrow_suggestion.theme }}</p>
+    <h2>Tomorrow's Suggestion</h2>
+    <p>{% if tomorrow_suggestion.theme is defined %}{{ tomorrow_suggestion.theme }}{% else %}Continue with the next planned review topic.{% endif %}</p>
   </section>
 </article>
 {% endblock %}

@@ -111,6 +111,7 @@ class FlakyQualityGenerator(FakeGenerator):
 class PlanDriftGenerator(FakeGenerator):
     def generate(self, payload: dict[str, Any]) -> DailyLearningContent:
         content = super().generate(payload)
+        content.title = "model rewritten title"
         content.main_theme = "model rewritten theme"
         content.plan_reference.reading_assignment = "model rewritten reading"
         content.plan_reference.practice_focus = "model rewritten focus"
@@ -227,6 +228,8 @@ def test_run_daily_workflow_restores_plan_fields_from_source(tmp_path):
     assert result.status == "success"
     validated = result.dry_run_artifacts.validated_json.read_text(encoding="utf-8")
     assert "model rewritten theme" not in validated
+    assert "model rewritten title" not in validated
+    assert "FE Daily Study Task - 2026-06-13" in validated
     assert "model rewritten reading" not in validated
     assert "model rewritten focus" not in validated
 

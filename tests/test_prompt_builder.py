@@ -39,6 +39,8 @@ def test_build_generation_payload_contains_plan_context_and_question_facts():
         "reading_assignment",
         "practice_focus",
     ]
+    assert payload["generation_rules"]["output_language"] == "English"
+    assert payload["generation_rules"]["page_format_reference"] == "FE Daily Study Task markdown"
 
 
 @pytest.mark.parametrize(
