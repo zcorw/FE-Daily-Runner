@@ -160,6 +160,42 @@ def test_main_write_passes_write_mode_to_workflow(tmp_path):
     assert calls[0]["run_mode"] is RunMode.WRITE
 
 
+def test_main_notify_passes_notify_mode_and_notifier_to_workflow(tmp_path):
+    paths = write_input_documents(tmp_path)
+    calls = []
+    notifier = object()
+
+    def workflow_runner(**kwargs):
+        calls.append(kwargs)
+        return WorkflowResult(
+            status="success",
+            target_date=kwargs["target_date"],
+            plan_source="test-plan",
+            notification_status="sent",
+        )
+
+    exit_code = main(
+        ["--date", "2026-06-13", "--notify"],
+        settings_overrides={
+            "_env_file": None,
+            "output_dir": tmp_path / "site",
+            "template_dir": tmp_path / "templates",
+            "telegram_bot_token": "telegram-token",
+            "telegram_chat_id": "123",
+            **paths,
+        },
+        question_bank_client_factory=lambda _settings: object(),
+        generator_factory=lambda _settings: object(),
+        telegram_notifier_factory=lambda _settings: notifier,
+        workflow_runner=workflow_runner,
+    )
+
+    assert exit_code == 0
+    assert calls[0]["run_mode"] is RunMode.NOTIFY
+    assert calls[0]["telegram_notifier"] is notifier
+    assert calls[0]["weak_points"] == "weak points"
+
+
 def write_input_documents(tmp_path: Path) -> dict[str, Path]:
     study_plan_path = tmp_path / "study.md"
     weak_points_path = tmp_path / "weak.md"
