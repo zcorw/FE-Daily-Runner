@@ -27,7 +27,6 @@ def validate_question_facts(
             "question_text": runtime.get("questionText"),
             "choices": runtime.get("choices"),
             "answer": runtime.get("answer"),
-            "explanation": runtime.get("explanation"),
             "images": runtime.get("images", []),
         }
         actual = {
@@ -35,9 +34,10 @@ def validate_question_facts(
             "question_text": generated.question_text,
             "choices": generated.choices,
             "answer": generated.answer,
-            "explanation": generated.explanation,
             "images": generated.images,
         }
+        if not generated.explanation.strip():
+            raise ContentValidationError(f"question {index} explanation must not be blank")
         for field, expected_value in expected.items():
             if actual[field] != expected_value:
                 raise ContentValidationError(

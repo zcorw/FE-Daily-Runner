@@ -97,6 +97,20 @@ def test_validate_question_facts_accepts_matching_runtime_details():
     validate_question_facts(generated_content(), [runtime_detail()])
 
 
+def test_validate_question_facts_accepts_generated_teaching_explanation():
+    validate_question_facts(
+        generated_content(explanation="Generated teaching explanation"),
+        [runtime_detail()],
+    )
+
+
+def test_validate_question_facts_rejects_blank_generated_explanation():
+    with pytest.raises(ContentValidationError) as exc_info:
+        validate_question_facts(generated_content(explanation="   "), [runtime_detail()])
+
+    assert "explanation" in str(exc_info.value)
+
+
 @pytest.mark.parametrize(
     ("field", "value"),
     [
@@ -104,7 +118,6 @@ def test_validate_question_facts_accepts_matching_runtime_details():
         ("question_text", "Changed question"),
         ("choices", {"ア": "Changed"}),
         ("answer", "イ"),
-        ("explanation", "Changed explanation"),
         ("images", [{"publicPath": "/assets/fe-siken/changed.png"}]),
     ],
 )
