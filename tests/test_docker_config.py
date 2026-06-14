@@ -25,3 +25,25 @@ def test_compose_declares_external_fe_shared_network():
     assert "fe-shared:" in compose
     assert "external: true" in compose
     assert "- fe-shared" in compose
+
+
+def test_compose_reads_env_file_and_mounts_all_write_targets():
+    compose = (ROOT / "docker-compose.yml").read_text(encoding="utf-8")
+
+    assert "env_file:" in compose
+    assert "path: .env" in compose
+    assert "required: false" in compose
+    for mount in [
+        "./site:/app/site",
+        "./state:/app/state",
+        "./logs:/app/logs",
+        "./personal:/app/personal",
+    ]:
+        assert mount in compose
+
+
+def test_dockerfile_includes_runtime_inputs_without_missing_config_copy():
+    dockerfile = (ROOT / "Dockerfile").read_text(encoding="utf-8")
+
+    assert "COPY references ./references" in dockerfile
+    assert "COPY config ./config" not in dockerfile

@@ -2,6 +2,9 @@ services:
   fe-daily-runner:
     build:
       context: .
+    env_file:
+      - path: .env
+        required: false
     environment:
       - TZ=Asia/Tokyo
       - QUESTION_BANK_SERVICE_URL=http://question-bank-runtime:8000
@@ -16,6 +19,7 @@ services:
       - ./site:/app/site
       - ./state:/app/state
       - ./logs:/app/logs
+      - ./personal:/app/personal
 
 networks:
   fe-shared:

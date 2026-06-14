@@ -99,7 +99,7 @@ docker compose run --rm fe-daily-runner python scripts/daily_publish.py --today 
   - Verification:
     - Test or README assertion confirms `.env.example` contains required variable names and no placeholder that looks like a real token.
 
-- [ ] T704 [P0] Update Docker Compose for one-command real run
+- [x] T704 [P0] Update Docker Compose for one-command real run
   - Goal / outcome: `docker compose run --rm fe-daily-runner ...` has all required env and writable mounts.
   - Implementation notes:
     - Ensure Compose reads `.env`.
