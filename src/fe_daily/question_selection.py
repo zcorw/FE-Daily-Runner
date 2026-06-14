@@ -52,7 +52,7 @@ def build_candidate_search_payloads(targets: list[FocusTarget]) -> list[dict[str
             {
                 "keywords": [target.label],
                 "examPart": "科目A",
-                "limit": target.count,
+                "limit": max(target.count * 5, 10),
             }
         )
     return payloads

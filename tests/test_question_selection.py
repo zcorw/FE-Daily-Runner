@@ -45,8 +45,8 @@ def test_build_candidate_search_payloads_use_runtime_api_shape():
     payloads = build_candidate_search_payloads(targets)
 
     assert payloads == [
-        {"keywords": ["SQL join/group"], "examPart": "科目A", "limit": 4},
-        {"keywords": ["DB design"], "examPart": "科目A", "limit": 2},
+        {"keywords": ["SQL join/group"], "examPart": "科目A", "limit": 20},
+        {"keywords": ["DB design"], "examPart": "科目A", "limit": 10},
     ]
 
 
