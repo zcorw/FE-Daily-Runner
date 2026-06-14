@@ -77,6 +77,7 @@ def test_openai_generator_calls_responses_api_with_settings():
     assert call["text"]["verbosity"] == "medium"
     assert_objects_disallow_additional_properties(call["text"]["format"]["schema"])
     assert_schema_does_not_use_unsupported_format(call["text"]["format"]["schema"])
+    assert_schema_does_not_use_min_properties(call["text"]["format"]["schema"])
     assert call["input"][0]["content"][0]["text"]
     assert content.main_theme == "SQL"
 
@@ -143,3 +144,17 @@ def assert_schema_does_not_use_unsupported_format(schema):
         elif isinstance(value, list):
             for item in value:
                 assert_schema_does_not_use_unsupported_format(item)
+
+
+def assert_schema_does_not_use_min_properties(schema):
+    if not isinstance(schema, dict):
+        return
+
+    assert "minProperties" not in schema
+
+    for value in schema.values():
+        if isinstance(value, dict):
+            assert_schema_does_not_use_min_properties(value)
+        elif isinstance(value, list):
+            for item in value:
+                assert_schema_does_not_use_min_properties(item)
