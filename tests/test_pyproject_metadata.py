@@ -23,3 +23,4 @@ def test_pyproject_configures_pytest():
 
     assert pytest_options["testpaths"] == ["tests"]
     assert "src" in pytest_options["pythonpath"]
+    assert pytest_options["asyncio_default_fixture_loop_scope"] == "function"

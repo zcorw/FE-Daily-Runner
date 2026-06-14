@@ -264,7 +264,7 @@ docker compose run --rm fe-daily-runner python scripts/daily_publish.py --today 
     - Default test is skipped.
     - With env enabled, dry-run command exits `0` and creates preview artifacts.
 
-- [ ] T710 [P1] Clean up pytest asyncio warning
+- [x] T710 [P1] Clean up pytest asyncio warning
   - Goal / outcome: Local test output is clean enough for release verification.
   - Implementation notes:
     - Add `asyncio_default_fixture_loop_scope = "function"` or equivalent supported pytest config.
