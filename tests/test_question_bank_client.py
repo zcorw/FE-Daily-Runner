@@ -138,6 +138,45 @@ def test_details_batch_posts_expected_payload():
     assert result == {"questions": [{"url": "https://example.test/q1"}]}
 
 
+def test_details_batch_normalizes_runtime_items_and_choice_list():
+    def handler(request):
+        assert request.method == "POST"
+        assert request.url.path == "/questions/details/batch"
+        return json_response(
+            {
+                "items": [
+                    {
+                        "questionUrl": "https://example.test/q1",
+                        "questionText": "Question",
+                        "choices": [
+                            {"label": "ア", "text": "alpha"},
+                            {"label": "イ", "text": "beta"},
+                        ],
+                        "answer": "ア",
+                        "explanation": "Explanation",
+                        "images": [],
+                    }
+                ]
+            }
+        )
+
+    client = make_client(handler)
+
+    assert client.details_batch(["https://example.test/q1"], include_answer=True, include_explanation=True) == {
+        "questions": [
+            {
+                "url": "https://example.test/q1",
+                "questionUrl": "https://example.test/q1",
+                "questionText": "Question",
+                "choices": {"ア": "alpha", "イ": "beta"},
+                "answer": "ア",
+                "explanation": "Explanation",
+                "images": [],
+            }
+        ]
+    }
+
+
 def test_http_errors_raise_clear_exception():
     client = make_client(lambda _request: json_response({"detail": "missing"}, status_code=404))
 

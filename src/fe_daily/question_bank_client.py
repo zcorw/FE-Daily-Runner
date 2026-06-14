@@ -69,7 +69,7 @@ class QuestionBankClient:
             "includeAnswer": include_answer,
             "includeExplanation": include_explanation,
         }
-        return self._request_json("POST", "/questions/details/batch", json=payload)
+        return self._request_details_batch("POST", "/questions/details/batch", json=payload)
 
     def asset_url(self, public_path: str) -> str:
         asset_path = public_path.removeprefix("/assets/fe-siken/").lstrip("/")
@@ -105,6 +105,24 @@ class QuestionBankClient:
             return payload
         raise QuestionBankError(f"{method} {path} returned unexpected JSON type: {type(payload).__name__}")
 
+    def _request_details_batch(self, method: str, path: str, **kwargs: Any) -> dict[str, Any]:
+        payload = self._request_any_json(method, path, **kwargs)
+        if isinstance(payload, list):
+            return {"questions": [self._normalize_detail(question) for question in payload]}
+        if isinstance(payload, dict):
+            if isinstance(payload.get("questions"), list):
+                return {
+                    **payload,
+                    "questions": [self._normalize_detail(question) for question in payload["questions"]],
+                }
+            if isinstance(payload.get("items"), list):
+                return {
+                    **{key: value for key, value in payload.items() if key != "items"},
+                    "questions": [self._normalize_detail(question) for question in payload["items"]],
+                }
+            return payload
+        raise QuestionBankError(f"{method} {path} returned unexpected JSON type: {type(payload).__name__}")
+
     def _request_any_json(self, method: str, path: str, **kwargs: Any) -> Any:
         try:
             response = self._client.request(method, path, **kwargs)
@@ -125,6 +143,28 @@ class QuestionBankClient:
         if "url" in question or "questionUrl" not in question:
             return question
         return {**question, "url": question["questionUrl"]}
+
+    @classmethod
+    def _normalize_detail(cls, question: Any) -> Any:
+        if not isinstance(question, dict):
+            return question
+        normalized = cls._normalize_candidate(question)
+        choices = normalized.get("choices")
+        if isinstance(choices, list):
+            normalized = {**normalized, "choices": cls._normalize_choices(choices)}
+        return normalized
+
+    @staticmethod
+    def _normalize_choices(choices: list[Any]) -> dict[str, str]:
+        normalized: dict[str, str] = {}
+        for choice in choices:
+            if not isinstance(choice, dict):
+                continue
+            label = choice.get("label")
+            text = choice.get("text")
+            if isinstance(label, str) and isinstance(text, str):
+                normalized[label] = text
+        return normalized
 
     @staticmethod
     def _drop_none(values: dict[str, Any]) -> dict[str, Any]:
