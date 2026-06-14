@@ -120,7 +120,7 @@ docker compose run --rm fe-daily-runner python scripts/daily_publish.py --today 
     - `docker compose config` passes.
     - Config output includes `fe-shared`, env variables, and mounts for output/state/logs/personal.
 
-- [ ] T711 [P0] Add question bank Runtime contract test suite
+- [x] T711 [P0] Add question bank Runtime contract test suite
   - Goal / outcome: Prove the current `QuestionBankClient` matches `references/question-bank-service/CONSUMER_INTEGRATION_GUIDE.md` for consumer read-only integration.
   - Implementation notes:
     - Use `httpx.MockTransport` so the test does not require a live Runtime service.

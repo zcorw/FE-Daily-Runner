@@ -31,8 +31,9 @@ class QuestionBankClient:
         timeout: float = 20,
         transport: httpx.BaseTransport | None = None,
     ) -> None:
+        self._base_url = base_url.rstrip("/")
         self._client = httpx.Client(
-            base_url=base_url.rstrip("/") + "/",
+            base_url=self._base_url + "/",
             timeout=timeout,
             transport=transport,
         )
@@ -69,6 +70,10 @@ class QuestionBankClient:
             "includeExplanation": include_explanation,
         }
         return self._request_json("POST", "/questions/details/batch", json=payload)
+
+    def asset_url(self, public_path: str) -> str:
+        asset_path = public_path.removeprefix("/assets/fe-siken/").lstrip("/")
+        return f"{self._base_url}/assets/fe-siken/{asset_path}"
 
     def close(self) -> None:
         self._client.close()
