@@ -190,7 +190,7 @@ docker compose run --rm fe-daily-runner python scripts/daily_publish.py --today 
     - Default test run skips the live smoke.
     - `RUN_RUNTIME_SMOKE=1 QUESTION_BANK_SERVICE_URL=<runtime-url> python -m pytest tests/test_runtime_smoke.py -q`
 
-- [ ] T705 [P0] Add CLI-level dry-run integration test
+- [x] T705 [P0] Add CLI-level dry-run integration test
   - Goal / outcome: The command entrypoint, not only `run_daily_workflow()`, is covered for dry-run.
   - Implementation notes:
     - Use fake question client factory and fake OpenAI generator injection, or add injectable factories to `main()`.
