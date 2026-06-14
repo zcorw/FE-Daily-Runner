@@ -100,6 +100,15 @@ class InvalidGenerator(FakeGenerator):
         return content
 
 
+class PlanDriftGenerator(FakeGenerator):
+    def generate(self, payload: dict[str, Any]) -> DailyLearningContent:
+        content = super().generate(payload)
+        content.main_theme = "model rewritten theme"
+        content.plan_reference.reading_assignment = "model rewritten reading"
+        content.plan_reference.practice_focus = "model rewritten focus"
+        return content
+
+
 class FakeNotifier:
     def __init__(self) -> None:
         self.call_count = 0
@@ -188,6 +197,30 @@ def test_run_daily_workflow_skip_policy_does_not_call_openai_for_existing_page(t
     assert result.status == "skipped"
     assert generator.call_count == 0
     assert target.read_text(encoding="utf-8") == "existing"
+
+
+def test_run_daily_workflow_restores_plan_fields_from_source(tmp_path):
+    plan_path = tmp_path / "june-study-plan.md"
+    write_plan(plan_path)
+    settings = load_settings(_env_file=None, output_dir=tmp_path / "site", template_dir=ROOT / "templates")
+
+    result = run_daily_workflow(
+        settings=settings,
+        target_date=date(2026, 6, 13),
+        run_mode=RunMode.DRY_RUN,
+        plan_path=plan_path,
+        weak_points="- SQL",
+        mistake_log="- GROUP BY",
+        recent_progress="- DB",
+        question_client=FakeQuestionClient(),
+        generator=PlanDriftGenerator(),
+    )
+
+    assert result.status == "success"
+    validated = result.dry_run_artifacts.validated_json.read_text(encoding="utf-8")
+    assert "model rewritten theme" not in validated
+    assert "model rewritten reading" not in validated
+    assert "model rewritten focus" not in validated
 
 
 def test_run_daily_workflow_fail_policy_raises_for_existing_page_before_openai(tmp_path):

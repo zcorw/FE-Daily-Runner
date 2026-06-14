@@ -32,6 +32,12 @@ def build_generation_payload(
         "questions": [_question_fact_payload(question) for question in questions],
         "generation_rules": {
             "openai_must_not_change_question_facts": True,
+            "output_must_copy_plan_fields_exactly": [
+                "date",
+                "main_theme",
+                "reading_assignment",
+                "practice_focus",
+            ],
             "openai_must_not_decide_paths_or_secrets": True,
             "python_validates_output_schema": True,
         },

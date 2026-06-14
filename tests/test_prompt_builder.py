@@ -33,6 +33,12 @@ def test_build_generation_payload_contains_plan_context_and_question_facts():
     assert payload["questions"][0]["source_url"] == "https://example.test/q1"
     assert payload["questions"][0]["answer"] == "ア"
     assert payload["generation_rules"]["openai_must_not_change_question_facts"] is True
+    assert payload["generation_rules"]["output_must_copy_plan_fields_exactly"] == [
+        "date",
+        "main_theme",
+        "reading_assignment",
+        "practice_focus",
+    ]
 
 
 @pytest.mark.parametrize(

@@ -116,6 +116,7 @@ def run_daily_workflow(
         questions=details,
     )
     content = generator.generate(generation_payload)
+    _restore_plan_fields(content, plan_entry)
 
     validate_question_facts(content, details)
     validate_learning_content_quality(content, _expected_plan(plan_entry))
@@ -221,6 +222,14 @@ def _expected_plan(plan_entry: StudyPlanEntry) -> dict[str, Any]:
         "reading_assignment": plan_entry.reading_assignment,
         "practice_focus": plan_entry.practice_focus,
     }
+
+
+def _restore_plan_fields(content: DailyLearningContent, plan_entry: StudyPlanEntry) -> None:
+    content.date = plan_entry.date
+    content.main_theme = plan_entry.main_theme
+    content.plan_reference.date = plan_entry.date
+    content.plan_reference.reading_assignment = plan_entry.reading_assignment
+    content.plan_reference.practice_focus = plan_entry.practice_focus
 
 
 def _absolute_page_url(settings: DailyRunnerSettings, page_url: str) -> str:
