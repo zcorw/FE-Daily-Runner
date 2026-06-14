@@ -80,6 +80,15 @@ class FakeGenerator:
         )
 
 
+class FakeNotifier:
+    def __init__(self) -> None:
+        self.messages: list[str] = []
+
+    def send_html_message(self, html: str) -> object:
+        self.messages.append(html)
+        return type("SendResult", (), {"status": "sent"})()
+
+
 def test_cli_dry_run_executes_workflow_and_writes_only_preview_artifacts(tmp_path):
     paths = write_input_documents(tmp_path)
     output_dir = tmp_path / "site"
@@ -129,6 +138,58 @@ def test_cli_write_executes_workflow_and_writes_formal_outputs(tmp_path):
     assert (tmp_path / "personal" / "progress.md").exists()
     assert (tmp_path / "state" / "daily_state.json").exists()
     assert (tmp_path / "logs" / "daily_publish" / "2026-06-13.md").exists()
+
+
+def test_cli_notify_writes_then_sends_one_telegram_message_when_configured(tmp_path):
+    paths = write_input_documents(tmp_path)
+    output_dir = tmp_path / "site"
+    notifier = FakeNotifier()
+
+    exit_code = main(
+        ["--date", "2026-06-13", "--notify"],
+        settings_overrides={
+            "_env_file": None,
+            "output_dir": output_dir,
+            "template_dir": ROOT / "templates",
+            "page_base_url": "https://example.test",
+            "telegram_bot_token": "telegram-token",
+            "telegram_chat_id": "123",
+            **paths,
+        },
+        question_bank_client_factory=lambda _settings: FakeQuestionClient(),
+        generator_factory=lambda _settings: FakeGenerator(),
+        telegram_notifier_factory=lambda _settings: notifier,
+    )
+
+    assert exit_code == 0
+    assert daily_page_path(output_dir, date(2026, 6, 13)).exists()
+    assert len(notifier.messages) == 1
+    assert "2026-06-13" in notifier.messages[0]
+    assert "Database aggregation" in notifier.messages[0]
+    assert "https://example.test/daily/2026-06-13/" in notifier.messages[0]
+
+
+def test_cli_notify_skips_telegram_when_config_is_missing(tmp_path):
+    paths = write_input_documents(tmp_path)
+    output_dir = tmp_path / "site"
+    notifier = FakeNotifier()
+
+    exit_code = main(
+        ["--date", "2026-06-13", "--notify"],
+        settings_overrides={
+            "_env_file": None,
+            "output_dir": output_dir,
+            "template_dir": ROOT / "templates",
+            **paths,
+        },
+        question_bank_client_factory=lambda _settings: FakeQuestionClient(),
+        generator_factory=lambda _settings: FakeGenerator(),
+        telegram_notifier_factory=lambda _settings: notifier,
+    )
+
+    assert exit_code == 0
+    assert daily_page_path(output_dir, date(2026, 6, 13)).exists()
+    assert notifier.messages == []
 
 
 def write_input_documents(tmp_path: Path) -> dict[str, Any]:

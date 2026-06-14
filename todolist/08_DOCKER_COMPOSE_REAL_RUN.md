@@ -217,7 +217,7 @@ docker compose run --rm fe-daily-runner python scripts/daily_publish.py --today 
     - `main(["--date", "2026-06-13", "--write"], ...)` returns `0`.
     - Expected formal files exist.
 
-- [ ] T707 [P0] Add CLI-level notify integration test
+- [x] T707 [P0] Add CLI-level notify integration test
   - Goal / outcome: `--notify` through CLI performs write first, then sends one Telegram message when configured.
   - Implementation notes:
     - Use fake Telegram notifier.
