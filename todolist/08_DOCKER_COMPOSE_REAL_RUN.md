@@ -86,7 +86,7 @@ docker compose run --rm fe-daily-runner python scripts/daily_publish.py --today 
     - Settings test confirms defaults.
     - Settings test confirms env overrides.
 
-- [ ] T703 [P0] Provide `.env.example` for full real run
+- [x] T703 [P0] Provide `.env.example` for full real run
   - Goal / outcome: User can copy `.env.example` to `.env`, fill secrets, and run Docker Compose.
   - Implementation notes:
     - Include Runtime, OpenAI, output, template, input path, page base URL, existing page policy, timezone, and Telegram variables.
