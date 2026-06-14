@@ -31,12 +31,39 @@ Confirm generated pages, dry-run JSON, logs, and Telegram messages contain no se
 
 ## Docker Network
 
+Prepare local Docker configuration:
+
+```bash
+cp .env.example .env
+```
+
+Fill `.env` with `OPENAI_API_KEY` before real generation. Fill
+`PAGE_BASE_URL`, `TELEGRAM_BOT_TOKEN`, and `TELEGRAM_CHAT_ID` before
+notification checks.
+
 Create the shared network once:
 
 ```bash
 docker network create fe-shared
 docker compose config
 ```
+
+Run the real Docker workflow:
+
+```bash
+docker compose run --rm fe-daily-runner python scripts/daily_publish.py --today --dry-run
+docker compose run --rm fe-daily-runner python scripts/daily_publish.py --today --write
+docker compose run --rm fe-daily-runner python scripts/daily_publish.py --today --notify
+```
+
+Expected artifacts:
+
+- `site/tmp/dry-run/`
+- `site/daily/`
+- `site/index.html`
+- `personal/progress.md`
+- `state/daily_state.json`
+- `logs/daily_publish/`
 
 Optional live smoke checks:
 

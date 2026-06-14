@@ -43,3 +43,14 @@ def test_readme_documents_operations_schedule_and_logs():
     assert "TELEGRAM_BOT_TOKEN" in text
     assert "cron" in text
     assert "logs/daily_publish/" in text
+
+
+def test_readme_documents_one_command_docker_real_run_flow():
+    text = README.read_text(encoding="utf-8")
+
+    assert "cp .env.example .env" in text
+    assert "docker compose run --rm fe-daily-runner python scripts/daily_publish.py --today --dry-run" in text
+    assert "docker compose run --rm fe-daily-runner python scripts/daily_publish.py --today --write" in text
+    assert "docker compose run --rm fe-daily-runner python scripts/daily_publish.py --today --notify" in text
+    assert "site/tmp/dry-run/" in text
+    assert "site/daily/" in text

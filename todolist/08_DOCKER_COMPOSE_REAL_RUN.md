@@ -231,7 +231,7 @@ docker compose run --rm fe-daily-runner python scripts/daily_publish.py --today 
     - Notify success returns `0`.
     - Notify missing env returns `0` and logs skipped status.
 
-- [ ] T708 [P1] Add real-run Docker documentation
+- [x] T708 [P1] Add real-run Docker documentation
   - Goal / outcome: README gives exact copy/paste commands for local Docker real run.
   - Implementation notes:
     - Include:

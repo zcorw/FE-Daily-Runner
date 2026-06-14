@@ -87,6 +87,15 @@ Mode behavior:
 
 ## Docker Runtime
 
+Prepare local real-run configuration:
+
+```bash
+cp .env.example .env
+```
+
+Edit `.env` and set at least `OPENAI_API_KEY`. Set `PAGE_BASE_URL`,
+`TELEGRAM_BOT_TOKEN`, and `TELEGRAM_CHAT_ID` before using `--notify`.
+
 Create the shared Docker network once:
 
 ```bash
@@ -107,6 +116,25 @@ docker exec <consumer-container> curl -fsS http://question-bank-runtime:8000/hea
 ```
 
 Do not use `localhost` from inside the container to reach the question bank service.
+
+Run the real workflow through Docker Compose:
+
+```bash
+docker compose run --rm fe-daily-runner python scripts/daily_publish.py --today --dry-run
+docker compose run --rm fe-daily-runner python scripts/daily_publish.py --today --write
+docker compose run --rm fe-daily-runner python scripts/daily_publish.py --today --notify
+```
+
+Expected output locations:
+
+```text
+site/tmp/dry-run/
+site/daily/
+site/index.html
+personal/progress.md
+state/daily_state.json
+logs/daily_publish/
+```
 
 Optional Runtime API smoke test:
 
