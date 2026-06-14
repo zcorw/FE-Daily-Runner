@@ -41,3 +41,34 @@ def test_question_bank_runtime_candidates_and_details_smoke():
     assert detail["url"] == questions[0]["url"]
     for image in detail.get("images", []):
         assert image["publicPath"].startswith("/assets/fe-siken/")
+
+
+def test_question_bank_runtime_asset_smoke():
+    client = QuestionBankClient(runtime_service_url())
+
+    candidates = client.search_candidates({"keywords": ["SQL"], "examPart": "科目A", "limit": 10})
+    questions = candidates.get("questions", [])
+    assert questions
+
+    details = client.details_batch(
+        [question["url"] for question in questions],
+        include_answer=True,
+        include_explanation=True,
+    )
+    image = next(
+        (
+            image
+            for detail in details["questions"]
+            for image in detail.get("images", [])
+            if image.get("publicPath")
+        ),
+        None,
+    )
+    assert image is not None
+    assert image["publicPath"].startswith("/assets/fe-siken/")
+    assert "question-bank-runtime" not in image["publicPath"]
+
+    response = httpx.get(client.asset_url(image["publicPath"]), timeout=20)
+
+    assert response.status_code == 200
+    assert response.content

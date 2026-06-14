@@ -175,7 +175,7 @@ docker compose run --rm fe-daily-runner python scripts/daily_publish.py --today 
     - `docker compose config`
     - `python -m pytest tests/test_docker_compose_contract.py -q`
 
-- [ ] T714 [P1] Extend opt-in live Runtime smoke with asset/publicPath checks
+- [x] T714 [P1] Extend opt-in live Runtime smoke with asset/publicPath checks
   - Goal / outcome: When real services are available, the smoke test verifies not only health/details but also asset delivery semantics from the integration guide.
   - Implementation notes:
     - Keep the test opt-in with `RUN_RUNTIME_SMOKE=1`.
