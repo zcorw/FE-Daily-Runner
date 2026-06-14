@@ -75,6 +75,8 @@ class OpenAIGenerator:
 
 
 def _strict_json_schema(schema: dict[str, Any]) -> dict[str, Any]:
+    schema.pop("format", None)
+
     if schema.get("type") == "object":
         schema["additionalProperties"] = False
 
