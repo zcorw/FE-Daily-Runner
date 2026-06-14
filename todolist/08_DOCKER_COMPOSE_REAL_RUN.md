@@ -159,7 +159,7 @@ docker compose run --rm fe-daily-runner python scripts/daily_publish.py --today 
   - Verification:
     - `python -m pytest tests/test_question_bank_flow.py tests/test_cli_workflow.py -q`
 
-- [ ] T713 [P0] Add Docker Compose question-bank service-name contract test
+- [x] T713 [P0] Add Docker Compose question-bank service-name contract test
   - Goal / outcome: Docker configuration follows the question bank service guide for same-network Compose integration.
   - Implementation notes:
     - Parse `docker compose config` output or inspect `docker-compose.yml`.
