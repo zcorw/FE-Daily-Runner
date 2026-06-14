@@ -104,6 +104,33 @@ def test_cli_dry_run_executes_workflow_and_writes_only_preview_artifacts(tmp_pat
     assert not daily_page_path(output_dir, date(2026, 6, 13)).exists()
 
 
+def test_cli_write_executes_workflow_and_writes_formal_outputs(tmp_path):
+    paths = write_input_documents(tmp_path)
+    output_dir = tmp_path / "site"
+
+    exit_code = main(
+        ["--date", "2026-06-13", "--write"],
+        settings_overrides={
+            "_env_file": None,
+            "output_dir": output_dir,
+            "template_dir": ROOT / "templates",
+            **paths,
+        },
+        question_bank_client_factory=lambda _settings: FakeQuestionClient(),
+        generator_factory=lambda _settings: FakeGenerator(),
+    )
+
+    daily_page = daily_page_path(output_dir, date(2026, 6, 13))
+    html = daily_page.read_text(encoding="utf-8")
+    assert exit_code == 0
+    assert daily_page.exists()
+    assert html.count("data-question=") == 10
+    assert (output_dir / "index.html").exists()
+    assert (tmp_path / "personal" / "progress.md").exists()
+    assert (tmp_path / "state" / "daily_state.json").exists()
+    assert (tmp_path / "logs" / "daily_publish" / "2026-06-13.md").exists()
+
+
 def write_input_documents(tmp_path: Path) -> dict[str, Any]:
     study_plan_path = tmp_path / "study.md"
     weak_points_path = tmp_path / "weak.md"

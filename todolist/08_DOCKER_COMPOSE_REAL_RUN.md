@@ -204,7 +204,7 @@ docker compose run --rm fe-daily-runner python scripts/daily_publish.py --today 
     - Dry-run JSON and preview exist.
     - Formal `site/daily/.../index.html` does not exist.
 
-- [ ] T706 [P0] Add CLI-level write integration test
+- [x] T706 [P0] Add CLI-level write integration test
   - Goal / outcome: `--write` through CLI writes daily page, index, progress, state, and log.
   - Implementation notes:
     - Use temp output root and fake clients.
