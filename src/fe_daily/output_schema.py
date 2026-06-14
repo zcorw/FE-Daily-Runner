@@ -30,6 +30,89 @@ ChoiceMap = Annotated[
     ),
 ]
 
+Goals = Annotated[list[Any], WithJsonSchema({"type": "array", "items": {"type": "string"}})]
+TimeTable = Annotated[
+    list[Any],
+    WithJsonSchema(
+        {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "minutes": {"type": "integer"},
+                    "task": {"type": "string"},
+                },
+            },
+        }
+    ),
+]
+Terms = Annotated[
+    list[Any],
+    WithJsonSchema(
+        {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "term": {"type": "string"},
+                    "meaning": {"type": "string"},
+                },
+            },
+        }
+    ),
+]
+KnowledgePoints = Annotated[
+    list[Any],
+    WithJsonSchema(
+        {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "title": {"type": "string"},
+                    "body": {"type": "string"},
+                },
+            },
+        }
+    ),
+]
+ReviewTable = Annotated[
+    list[Any],
+    WithJsonSchema(
+        {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "question_no": {"type": "integer"},
+                },
+            },
+        }
+    ),
+]
+TomorrowSuggestion = Annotated[
+    dict[str, Any],
+    WithJsonSchema(
+        {
+            "type": "object",
+            "properties": {
+                "theme": {"type": "string"},
+            },
+        }
+    ),
+]
+ProgressSummary = Annotated[
+    dict[str, Any],
+    WithJsonSchema(
+        {
+            "type": "object",
+            "properties": {
+                "summary": {"type": "string"},
+            },
+        }
+    ),
+]
+
 
 class QuestionLearningBlock(BaseModel):
     model_config = ConfigDict(extra="allow")
@@ -66,11 +149,11 @@ class DailyLearningContent(BaseModel):
     title: str = Field(min_length=1)
     main_theme: str = Field(min_length=1)
     plan_reference: PlanReference
-    goals: list[Any] = Field(default_factory=list)
-    time_table: list[Any] = Field(default_factory=list)
-    terms: list[Any] = Field(default_factory=list)
-    knowledge_points: list[Any] = Field(default_factory=list)
+    goals: Goals = Field(default_factory=list)
+    time_table: TimeTable = Field(default_factory=list)
+    terms: Terms = Field(default_factory=list)
+    knowledge_points: KnowledgePoints = Field(default_factory=list)
     questions: list[QuestionLearningBlock] = Field(min_length=1)
-    review_table_template: list[Any] = Field(default_factory=list)
-    tomorrow_suggestion: dict[str, Any] = Field(default_factory=dict)
-    progress_summary: dict[str, Any] = Field(default_factory=dict)
+    review_table_template: ReviewTable = Field(default_factory=list)
+    tomorrow_suggestion: TomorrowSuggestion = Field(default_factory=dict)
+    progress_summary: ProgressSummary = Field(default_factory=dict)
