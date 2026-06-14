@@ -55,7 +55,7 @@ class OpenAIGenerator:
                 "format": {
                     "type": "json_schema",
                     "name": "daily_learning_content",
-                    "schema": _strict_json_schema(DailyLearningContent.model_json_schema()),
+                    "schema": _openai_json_schema(DailyLearningContent.model_json_schema()),
                     "strict": True,
                 },
             },
@@ -72,6 +72,29 @@ class OpenAIGenerator:
             ],
         )
         return response
+
+
+def _openai_json_schema(schema: dict[str, Any]) -> dict[str, Any]:
+    return _strict_json_schema(_inline_local_refs(schema, schema.get("$defs", {})))
+
+
+def _inline_local_refs(schema: Any, definitions: dict[str, Any]) -> Any:
+    if isinstance(schema, list):
+        return [_inline_local_refs(item, definitions) for item in schema]
+    if not isinstance(schema, dict):
+        return schema
+
+    ref = schema.get("$ref")
+    if isinstance(ref, str) and ref.startswith("#/$defs/"):
+        name = ref.removeprefix("#/$defs/")
+        resolved = definitions[name]
+        return _inline_local_refs({**resolved, **{key: value for key, value in schema.items() if key != "$ref"}}, definitions)
+
+    return {
+        key: _inline_local_refs(value, definitions)
+        for key, value in schema.items()
+        if key != "$defs"
+    }
 
 
 def _strict_json_schema(schema: dict[str, Any]) -> dict[str, Any]:
