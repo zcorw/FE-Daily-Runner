@@ -27,14 +27,14 @@ def validate_question_facts(
             "question_text": runtime.get("questionText"),
             "choices": runtime.get("choices"),
             "answer": runtime.get("answer"),
-            "images": runtime.get("images", []),
+            "images": _image_public_paths(runtime.get("images", [])),
         }
         actual = {
             "source_url": str(generated.source_url).rstrip("/"),
             "question_text": generated.question_text,
             "choices": generated.choices,
             "answer": generated.answer,
-            "images": generated.images,
+            "images": _image_public_paths(generated.images),
         }
         if not generated.explanation.strip():
             raise ContentValidationError(f"question {index} explanation must not be blank")
@@ -43,6 +43,10 @@ def validate_question_facts(
                 raise ContentValidationError(
                     f"question {index} {field} changed: expected {expected_value!r}, got {actual[field]!r}"
                 )
+
+
+def _image_public_paths(images: list[dict[str, Any]]) -> list[str | None]:
+    return [image.get("publicPath") for image in images]
 
 
 def validate_learning_content_quality(

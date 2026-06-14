@@ -104,6 +104,21 @@ def test_validate_question_facts_accepts_generated_teaching_explanation():
     )
 
 
+def test_validate_question_facts_accepts_runtime_image_metadata():
+    detail = runtime_detail()
+    detail["images"] = [
+        {
+            "publicPath": "/assets/fe-siken/r7/q1.png",
+            "section": "question",
+            "url": "https://example.test/q1.png",
+            "width": "406",
+            "height": "216",
+        }
+    ]
+
+    validate_question_facts(generated_content(), [detail])
+
+
 def test_validate_question_facts_rejects_blank_generated_explanation():
     with pytest.raises(ContentValidationError) as exc_info:
         validate_question_facts(generated_content(explanation="   "), [runtime_detail()])
