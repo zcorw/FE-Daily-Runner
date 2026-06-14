@@ -75,6 +75,7 @@ def test_openai_generator_calls_responses_api_with_settings():
     assert call["model"] == "gpt-test"
     assert call["reasoning"] == {"effort": "low"}
     assert call["text"]["verbosity"] == "medium"
+    assert_objects_disallow_additional_properties(call["text"]["format"]["schema"])
     assert call["input"][0]["content"][0]["text"]
     assert content.main_theme == "SQL"
 
@@ -112,3 +113,18 @@ def test_openai_generator_raises_after_second_invalid_output():
         generator.generate({"plan": {"date": "2026-06-13"}})
 
     assert len(client.responses.calls) == 2
+
+
+def assert_objects_disallow_additional_properties(schema):
+    if not isinstance(schema, dict):
+        return
+
+    if schema.get("type") == "object":
+        assert schema.get("additionalProperties") is False
+
+    for value in schema.values():
+        if isinstance(value, dict):
+            assert_objects_disallow_additional_properties(value)
+        elif isinstance(value, list):
+            for item in value:
+                assert_objects_disallow_additional_properties(item)

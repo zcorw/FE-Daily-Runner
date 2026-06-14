@@ -55,7 +55,7 @@ class OpenAIGenerator:
                 "format": {
                     "type": "json_schema",
                     "name": "daily_learning_content",
-                    "schema": DailyLearningContent.model_json_schema(),
+                    "schema": _strict_json_schema(DailyLearningContent.model_json_schema()),
                     "strict": True,
                 },
             },
@@ -72,3 +72,18 @@ class OpenAIGenerator:
             ],
         )
         return response
+
+
+def _strict_json_schema(schema: dict[str, Any]) -> dict[str, Any]:
+    if schema.get("type") == "object":
+        schema["additionalProperties"] = False
+
+    for value in schema.values():
+        if isinstance(value, dict):
+            _strict_json_schema(value)
+        elif isinstance(value, list):
+            for item in value:
+                if isinstance(item, dict):
+                    _strict_json_schema(item)
+
+    return schema
