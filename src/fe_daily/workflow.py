@@ -165,18 +165,6 @@ def run_daily_workflow(
             question_count=len(content.questions),
             status="success",
         )
-        write_run_log(
-            log_root=workspace_root / "logs" / "daily_publish",
-            target_date=target_date,
-            started_at=datetime.now(timezone.utc),
-            run_mode=run_mode.value,
-            question_count=len(content.questions),
-            output_paths=[str(target_paths.daily_page), str(target_paths.index_page)],
-            plan_source=plan_entry.plan_source,
-            notification_status="not-run",
-            status="success",
-            errors=[],
-        )
         notification_status = "not-run"
         if run_mode is RunMode.NOTIFY and (
             settings.telegram_bot_token is None or settings.telegram_chat_id is None
@@ -195,6 +183,18 @@ def run_daily_workflow(
             )
             send_result = notifier.send_html_message(message)
             notification_status = getattr(send_result, "status", "sent")
+        write_run_log(
+            log_root=workspace_root / "logs" / "daily_publish",
+            target_date=target_date,
+            started_at=datetime.now(timezone.utc),
+            run_mode=run_mode.value,
+            question_count=len(content.questions),
+            output_paths=[str(target_paths.daily_page), str(target_paths.index_page)],
+            plan_source=plan_entry.plan_source,
+            notification_status=notification_status,
+            status="success",
+            errors=[],
+        )
         return WorkflowResult(
             status="success",
             target_date=target_date,

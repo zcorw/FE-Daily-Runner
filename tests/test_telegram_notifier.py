@@ -33,6 +33,20 @@ def test_render_telegram_message_escapes_html_special_characters():
     assert "<SQL & DB>" not in html
 
 
+def test_render_telegram_message_uses_supported_telegram_html_tags():
+    html = render_telegram_message(
+        date="2026-06-13",
+        main_theme="SQL",
+        page_url="https://example.test/daily/2026-06-13/",
+        template_dir=ROOT / "templates",
+    )
+
+    assert "<p" not in html
+    assert "</p>" not in html
+    assert "<strong>" in html
+    assert "<a href=" in html
+
+
 def test_telegram_notifier_sends_html_without_logging_token_on_failure():
     logger = CapturingLogger()
 
