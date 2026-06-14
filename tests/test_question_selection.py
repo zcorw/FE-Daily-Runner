@@ -26,6 +26,14 @@ def test_parse_practice_focus_handles_public_question_focus_without_count():
     assert targets == [FocusTarget(label="Public questions A first half; classify every missed item", count=10)]
 
 
+def test_parse_practice_focus_handles_comma_separated_review_focus_without_counts():
+    focus = "Calculation-only review: base conversion, bit operation, transmission, availability"
+
+    targets = parse_practice_focus(focus)
+
+    assert targets == [FocusTarget(label=focus, count=10)]
+
+
 def test_parse_practice_focus_rejects_empty_text():
     with pytest.raises(ValueError):
         parse_practice_focus(" ")

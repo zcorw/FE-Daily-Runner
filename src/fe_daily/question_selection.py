@@ -22,13 +22,14 @@ def parse_practice_focus(practice_focus: str) -> list[FocusTarget]:
         raise ValueError("practice focus must not be blank")
 
     parts = [part.strip() for part in text.split(",") if part.strip()]
+    matches = [FOCUS_PART_PATTERN.match(part) for part in parts]
+    if all(match is None for match in matches):
+        return [FocusTarget(label=text, count=10)]
+
     targets: list[FocusTarget] = []
 
-    for part in parts:
-        match = FOCUS_PART_PATTERN.match(part)
+    for part, match in zip(parts, matches, strict=True):
         if match is None:
-            if len(parts) == 1:
-                return [FocusTarget(label=part, count=10)]
             raise ValueError(f"practice focus item is missing a count: {part}")
         targets.append(
             FocusTarget(
