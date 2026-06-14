@@ -1,5 +1,7 @@
 from typing import Any, Protocol
 
+from fe_daily.image_paths import normalize_image_src
+
 
 class QuestionDetailValidationError(ValueError):
     pass
@@ -33,6 +35,7 @@ def load_required_details(client: DetailsClient, urls: list[str]) -> list[dict[s
 
     for index, detail in enumerate(questions):
         _validate_detail(detail, index)
+        _normalize_detail_images(detail)
 
     return questions
 
@@ -50,3 +53,16 @@ def _validate_detail(detail: Any, index: int) -> None:
     choices = detail.get("choices")
     if not isinstance(choices, dict) or not choices:
         raise QuestionDetailValidationError(f"question detail {index} missing choices")
+
+
+def _normalize_detail_images(detail: dict[str, Any]) -> None:
+    images = detail.get("images", [])
+    if not isinstance(images, list):
+        return
+
+    for image in images:
+        if not isinstance(image, dict):
+            continue
+        public_path = image.get("publicPath")
+        if isinstance(public_path, str):
+            image["publicPath"] = normalize_image_src(public_path)

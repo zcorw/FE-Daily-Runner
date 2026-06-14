@@ -143,7 +143,7 @@ docker compose run --rm fe-daily-runner python scripts/daily_publish.py --today 
   - Verification:
     - `python -m pytest tests/test_question_bank_client.py tests/test_question_bank_contract.py -q`
 
-- [ ] T712 [P0] Add documented query-flow integration test
+- [x] T712 [P0] Add documented query-flow integration test
   - Goal / outcome: The consumer flow from the integration guide is covered end to end without real network calls.
   - Implementation notes:
     - Test flow: health check -> candidate search -> select question URLs -> batch details -> render or preview output.
