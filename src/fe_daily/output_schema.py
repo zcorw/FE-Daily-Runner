@@ -1,7 +1,7 @@
 from datetime import date
-from typing import Any
+from typing import Annotated, Any
 
-from pydantic import BaseModel, ConfigDict, Field, HttpUrl
+from pydantic import BaseModel, ConfigDict, Field, HttpUrl, WithJsonSchema, field_validator
 
 
 class PlanReference(BaseModel):
@@ -12,16 +12,51 @@ class PlanReference(BaseModel):
     practice_focus: str = Field(min_length=1)
 
 
+ChoiceMap = Annotated[
+    dict[str, str],
+    WithJsonSchema(
+        {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "label": {"type": "string"},
+                    "text": {"type": "string"},
+                },
+                "required": ["label", "text"],
+                "additionalProperties": False,
+            },
+        }
+    ),
+]
+
+
 class QuestionLearningBlock(BaseModel):
     model_config = ConfigDict(extra="allow")
 
     source_url: HttpUrl
     question_text: str = Field(min_length=1)
-    choices: dict[str, str] = Field(min_length=1)
+    choices: ChoiceMap = Field(min_length=1)
     answer: str = Field(min_length=1)
     explanation: str = Field(min_length=1)
     knowledge_point: str | None = None
     images: list[dict[str, Any]] = Field(default_factory=list)
+
+    @field_validator("choices", mode="before")
+    @classmethod
+    def normalize_choice_list(cls, value: Any) -> Any:
+        if not isinstance(value, list):
+            return value
+
+        normalized: dict[str, str] = {}
+        for choice in value:
+            if not isinstance(choice, dict):
+                continue
+            label = choice.get("label")
+            text = choice.get("text")
+            if isinstance(label, str) and isinstance(text, str):
+                normalized[label] = text
+        return normalized
 
 
 class DailyLearningContent(BaseModel):

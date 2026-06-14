@@ -46,6 +46,26 @@ def test_daily_learning_content_accepts_valid_payload():
     assert content.questions[0].answer == "ア"
 
 
+def test_question_choices_accept_openai_choice_list_and_normalize_to_mapping():
+    payload = valid_content_payload()
+    payload["questions"] = [
+        {
+            "source_url": "https://example.test/q1",
+            "question_text": "Question text",
+            "choices": [
+                {"label": "A", "text": "alpha"},
+                {"label": "B", "text": "beta"},
+            ],
+            "answer": "A",
+            "explanation": "Explanation",
+        }
+    ]
+
+    content = DailyLearningContent.model_validate(payload)
+
+    assert content.questions[0].choices == {"A": "alpha", "B": "beta"}
+
+
 @pytest.mark.parametrize("field", ["date", "main_theme", "plan_reference", "questions"])
 def test_daily_learning_content_rejects_missing_required_top_level_fields(field):
     payload = valid_content_payload()
