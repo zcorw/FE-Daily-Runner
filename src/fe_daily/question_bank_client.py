@@ -46,10 +46,10 @@ class QuestionBankClient:
 
     def candidates(self, **params: Any) -> dict[str, Any]:
         query = self._runtime_query_params(params)
-        return self._request_json("GET", "/questions/candidates", params=query)
+        return self._request_candidates("GET", "/questions/candidates", params=query)
 
     def search_candidates(self, payload: dict[str, Any]) -> dict[str, Any]:
-        return self._request_json("POST", "/questions/candidates/search", json=payload)
+        return self._request_candidates("POST", "/questions/candidates/search", json=payload)
 
     def question_by_url(self, question_url: str) -> dict[str, Any]:
         return self._request_json("GET", "/questions/by-url", params={"url": question_url})
@@ -90,6 +90,41 @@ class QuestionBankClient:
             raise QuestionBankHTTPError(method, path, response.status_code, response.text)
 
         return response.json()
+
+    def _request_candidates(self, method: str, path: str, **kwargs: Any) -> dict[str, Any]:
+        payload = self._request_any_json(method, path, **kwargs)
+        if isinstance(payload, list):
+            return {"questions": [self._normalize_candidate(question) for question in payload]}
+        if isinstance(payload, dict):
+            questions = payload.get("questions")
+            if isinstance(questions, list):
+                return {
+                    **payload,
+                    "questions": [self._normalize_candidate(question) for question in questions],
+                }
+            return payload
+        raise QuestionBankError(f"{method} {path} returned unexpected JSON type: {type(payload).__name__}")
+
+    def _request_any_json(self, method: str, path: str, **kwargs: Any) -> Any:
+        try:
+            response = self._client.request(method, path, **kwargs)
+        except httpx.TimeoutException as exc:
+            raise QuestionBankTimeoutError(method, path, str(exc)) from exc
+        except httpx.RequestError as exc:
+            raise QuestionBankError(f"{method} {path} request failed: {exc}") from exc
+
+        if response.status_code >= 400:
+            raise QuestionBankHTTPError(method, path, response.status_code, response.text)
+
+        return response.json()
+
+    @staticmethod
+    def _normalize_candidate(question: Any) -> Any:
+        if not isinstance(question, dict):
+            return question
+        if "url" in question or "questionUrl" not in question:
+            return question
+        return {**question, "url": question["questionUrl"]}
 
     @staticmethod
     def _drop_none(values: dict[str, Any]) -> dict[str, Any]:

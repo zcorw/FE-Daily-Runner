@@ -69,6 +69,34 @@ def test_search_candidates_posts_json_body():
     }
 
 
+def test_search_candidates_normalizes_runtime_list_response_and_question_url_key():
+    def handler(request):
+        assert request.method == "POST"
+        assert request.url.path == "/questions/candidates/search"
+        return json_response(
+            [
+                {
+                    "questionId": "q1",
+                    "questionUrl": "https://www.fe-siken.com/kakomon/sample/q1.html",
+                    "examPart": "科目A",
+                }
+            ]
+        )
+
+    client = make_client(handler)
+
+    assert client.search_candidates({"keywords": ["SQL"], "examPart": "科目A", "limit": 1}) == {
+        "questions": [
+            {
+                "questionId": "q1",
+                "questionUrl": "https://www.fe-siken.com/kakomon/sample/q1.html",
+                "url": "https://www.fe-siken.com/kakomon/sample/q1.html",
+                "examPart": "科目A",
+            }
+        ]
+    }
+
+
 def test_question_by_url_gets_encoded_source_url():
     def handler(request):
         assert request.method == "GET"
