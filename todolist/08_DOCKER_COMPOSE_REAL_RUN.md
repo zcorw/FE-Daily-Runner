@@ -47,7 +47,7 @@ docker compose run --rm fe-daily-runner python scripts/daily_publish.py --today 
 
 ## Development TodoList
 
-- [ ] T701 [P0] Wire CLI run modes to workflow
+- [x] T701 [P0] Wire CLI run modes to workflow
   - Goal / outcome: `python scripts/daily_publish.py --date 2026-06-13 --dry-run|--write|--notify` executes `run_daily_workflow()` instead of only printing the parsed mode.
   - Implementation notes:
     - In `src/fe_daily/cli.py`, load settings, resolve target date, instantiate `QuestionBankClient`, `OpenAIGenerator`, and optional `TelegramNotifier`.

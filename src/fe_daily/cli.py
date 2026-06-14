@@ -9,7 +9,10 @@ from pydantic import ValidationError
 
 from fe_daily.config import RunMode, load_settings
 from fe_daily.health_check import check_runtime_health
+from fe_daily.openai_generator import OpenAIGenerator
 from fe_daily.question_bank_client import QuestionBankClient
+from fe_daily.telegram_notifier import TelegramNotifier
+from fe_daily.workflow import run_daily_workflow
 
 
 def parse_date(value: str) -> date:
@@ -110,6 +113,9 @@ def main(
     *,
     settings_overrides: dict[str, Any] | None = None,
     question_bank_client_factory: Any | None = None,
+    generator_factory: Any | None = None,
+    telegram_notifier_factory: Any | None = None,
+    workflow_runner: Any | None = None,
 ) -> int:
     args = parse_args(argv)
 
@@ -144,5 +150,56 @@ def main(
         print(f"Render-only is not implemented yet: {args.input_path}")
         return 0
 
-    print(f"Run mode parsed: {args.run_mode.value}")
+    overrides = settings_overrides or {}
+    try:
+        settings = load_settings(**overrides)
+        target_date = resolve_target_date(args, timezone_name=settings.tz)
+    except (ValidationError, ValueError) as exc:
+        print(f"Config invalid: {exc}")
+        return 2
+
+    factory = question_bank_client_factory or (
+        lambda loaded_settings: QuestionBankClient(
+            loaded_settings.question_bank_service_url,
+            timeout=loaded_settings.question_bank_timeout_seconds,
+        )
+    )
+    generator_builder = generator_factory or (lambda loaded_settings: OpenAIGenerator(settings=loaded_settings))
+    notifier_builder = telegram_notifier_factory or _build_telegram_notifier
+    runner = workflow_runner or run_daily_workflow
+
+    client = factory(settings)
+    try:
+        result = runner(
+            settings=settings,
+            target_date=target_date,
+            run_mode=args.run_mode,
+            plan_path=settings.study_plan_path,
+            weak_points=settings.weak_points_path.read_text(encoding="utf-8"),
+            mistake_log=settings.mistake_log_path.read_text(encoding="utf-8"),
+            recent_progress=settings.progress_context_path.read_text(encoding="utf-8"),
+            question_client=client,
+            generator=generator_builder(settings),
+            telegram_notifier=notifier_builder(settings),
+        )
+    except Exception as exc:
+        print(f"Workflow failed: {exc}")
+        return 1
+    finally:
+        close = getattr(client, "close", None)
+        if callable(close):
+            close()
+
+    print(f"Workflow {result.status}: {result.target_date.isoformat()}")
+    if result.notification_status != "not-run":
+        print(f"Notification: {result.notification_status}")
     return 0
+
+
+def _build_telegram_notifier(settings: Any) -> TelegramNotifier | None:
+    if settings.telegram_bot_token is None or settings.telegram_chat_id is None:
+        return None
+    return TelegramNotifier(
+        bot_token=settings.telegram_bot_token.get_secret_value(),
+        chat_id=settings.telegram_chat_id.get_secret_value(),
+    )
