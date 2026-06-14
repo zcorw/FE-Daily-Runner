@@ -30,6 +30,10 @@ def test_load_settings_uses_safe_defaults(tmp_path, monkeypatch):
     assert settings.template_dir == tmp_path / "templates"
     assert settings.markdown_compat_enabled is False
     assert settings.markdown_output_dir == Path("docs")
+    assert settings.study_plan_path == Path("references/legacy-project/june-study-plan.md")
+    assert settings.weak_points_path == Path("references/personal-context/weak_points.md")
+    assert settings.mistake_log_path == Path("references/personal-context/mistake_log.md")
+    assert settings.progress_context_path == Path("references/personal-context/progress.md")
 
 
 def test_load_settings_reads_env_file(tmp_path):
@@ -41,6 +45,10 @@ def test_load_settings_reads_env_file(tmp_path):
                 "RUN_MODE=write",
                 "EXISTING_PAGE_POLICY=overwrite",
                 "OPENAI_API_KEY=sk-test-secret",
+                "STUDY_PLAN_PATH=custom/study.md",
+                "WEAK_POINTS_PATH=custom/weak.md",
+                "MISTAKE_LOG_PATH=custom/mistakes.md",
+                "PROGRESS_CONTEXT_PATH=custom/progress.md",
             ]
         ),
         encoding="utf-8",
@@ -53,6 +61,10 @@ def test_load_settings_reads_env_file(tmp_path):
     assert settings.existing_page_policy is ExistingPagePolicy.OVERWRITE
     assert settings.openai_api_key is not None
     assert settings.openai_api_key.get_secret_value() == "sk-test-secret"
+    assert settings.study_plan_path == Path("custom/study.md")
+    assert settings.weak_points_path == Path("custom/weak.md")
+    assert settings.mistake_log_path == Path("custom/mistakes.md")
+    assert settings.progress_context_path == Path("custom/progress.md")
 
 
 def test_load_settings_rejects_invalid_enums():
@@ -69,6 +81,9 @@ def test_load_settings_rejects_blank_required_values():
 
     with pytest.raises(ValidationError):
         load_settings(_env_file=None, output_dir="")
+
+    with pytest.raises(ValidationError):
+        load_settings(_env_file=None, study_plan_path="")
 
 
 def test_settings_repr_redacts_secrets():
