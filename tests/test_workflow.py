@@ -100,6 +100,14 @@ class InvalidGenerator(FakeGenerator):
         return content
 
 
+class FlakyQualityGenerator(FakeGenerator):
+    def generate(self, payload: dict[str, Any]) -> DailyLearningContent:
+        content = super().generate(payload)
+        if self.call_count == 1:
+            content.terms = content.terms[:8]
+        return content
+
+
 class PlanDriftGenerator(FakeGenerator):
     def generate(self, payload: dict[str, Any]) -> DailyLearningContent:
         content = super().generate(payload)
@@ -221,6 +229,28 @@ def test_run_daily_workflow_restores_plan_fields_from_source(tmp_path):
     assert "model rewritten theme" not in validated
     assert "model rewritten reading" not in validated
     assert "model rewritten focus" not in validated
+
+
+def test_run_daily_workflow_retries_model_quality_failures(tmp_path):
+    plan_path = tmp_path / "june-study-plan.md"
+    write_plan(plan_path)
+    settings = load_settings(_env_file=None, output_dir=tmp_path / "site", template_dir=ROOT / "templates")
+    generator = FlakyQualityGenerator()
+
+    result = run_daily_workflow(
+        settings=settings,
+        target_date=date(2026, 6, 13),
+        run_mode=RunMode.DRY_RUN,
+        plan_path=plan_path,
+        weak_points="- SQL",
+        mistake_log="- GROUP BY",
+        recent_progress="- DB",
+        question_client=FakeQuestionClient(),
+        generator=generator,
+    )
+
+    assert result.status == "success"
+    assert generator.call_count == 2
 
 
 def test_run_daily_workflow_fail_policy_raises_for_existing_page_before_openai(tmp_path):

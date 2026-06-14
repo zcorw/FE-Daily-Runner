@@ -1,9 +1,15 @@
 from dataclasses import dataclass
 from datetime import date, datetime, timezone
+from pathlib import Path
 from typing import Any, Protocol
 
 from fe_daily.config import DailyRunnerSettings, RunMode
-from fe_daily.content_validation import validate_daily_html, validate_learning_content_quality, validate_question_facts
+from fe_daily.content_validation import (
+    ContentValidationError,
+    validate_daily_html,
+    validate_learning_content_quality,
+    validate_question_facts,
+)
 from fe_daily.dry_run import DryRunArtifactPaths, write_dry_run_artifacts
 from fe_daily.health_check import HealthStatus, check_runtime_health
 from fe_daily.output_schema import DailyLearningContent
@@ -115,14 +121,15 @@ def run_daily_workflow(
         mistake_log=mistake_log,
         questions=details,
     )
-    content = generator.generate(generation_payload)
-    _restore_plan_fields(content, plan_entry)
-
-    validate_question_facts(content, details)
-    validate_learning_content_quality(content, _expected_plan(plan_entry))
     page_url = f"/daily/{target_date:%Y-%m-%d}/"
-    html = render_daily_page(content, page_url=page_url, template_dir=settings.template_dir)
-    validate_daily_html(html, content, page_url=page_url)
+    content, html = _generate_validated_content(
+        generator=generator,
+        generation_payload=generation_payload,
+        plan_entry=plan_entry,
+        runtime_details=details,
+        page_url=page_url,
+        template_dir=settings.template_dir,
+    )
 
     if run_mode is RunMode.DRY_RUN:
         artifacts = write_dry_run_artifacts(
@@ -230,6 +237,35 @@ def _restore_plan_fields(content: DailyLearningContent, plan_entry: StudyPlanEnt
     content.plan_reference.date = plan_entry.date
     content.plan_reference.reading_assignment = plan_entry.reading_assignment
     content.plan_reference.practice_focus = plan_entry.practice_focus
+
+
+def _generate_validated_content(
+    *,
+    generator: WorkflowGenerator,
+    generation_payload: dict[str, Any],
+    plan_entry: StudyPlanEntry,
+    runtime_details: list[dict[str, Any]],
+    page_url: str,
+    template_dir: str | Path,
+    max_attempts: int = 3,
+) -> tuple[DailyLearningContent, str]:
+    last_error: ContentValidationError | None = None
+    for _ in range(max_attempts):
+        content = generator.generate(generation_payload)
+        _restore_plan_fields(content, plan_entry)
+        try:
+            validate_question_facts(content, runtime_details)
+            validate_learning_content_quality(content, _expected_plan(plan_entry))
+            html = render_daily_page(content, page_url=page_url, template_dir=template_dir)
+            validate_daily_html(html, content, page_url=page_url)
+        except ContentValidationError as exc:
+            last_error = exc
+            continue
+        return content, html
+
+    if last_error is not None:
+        raise last_error
+    raise RuntimeError("content generation did not run")
 
 
 def _absolute_page_url(settings: DailyRunnerSettings, page_url: str) -> str:
