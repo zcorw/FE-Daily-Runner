@@ -17,6 +17,12 @@ FOCUS_PART_PATTERN = re.compile(r"^(?P<label>.+?)\s+(?P<count>\d+)$")
 SUBJECT_A_EXAM_PART = "科目A"
 LEGACY_MOJIBAKE_SUBJECT_A_EXAM_PART = "绉戠洰A"
 SUBJECT_A_EXAM_PARTS = {SUBJECT_A_EXAM_PART, LEGACY_MOJIBAKE_SUBJECT_A_EXAM_PART}
+CANONICAL_TOPIC_TAG_ALIASES = (
+    (("transaction",), ("transaction",)),
+    (("lock", "recovery", "rollback", "commit"), ("transaction",)),
+    (("sql",), ("sql",)),
+    (("security",), ("security",)),
+)
 
 
 def parse_practice_focus(practice_focus: str) -> list[FocusTarget]:
@@ -51,14 +57,28 @@ def build_candidate_search_payloads(targets: list[FocusTarget]) -> list[dict[str
             raise ValueError("focus target count must be positive")
         if not target.label.strip():
             raise ValueError("focus target label must not be blank")
-        payloads.append(
-            {
-                "keywords": [target.label],
-                "examPart": SUBJECT_A_EXAM_PART,
-                "limit": max(target.count * 5, 10),
-            }
-        )
+        payload = {
+            "keywords": [target.label],
+            "examPart": SUBJECT_A_EXAM_PART,
+            "limit": max(target.count * 5, 10),
+        }
+        topic_tags = _topic_tags_for_label(target.label)
+        if topic_tags:
+            payload["topicTags"] = topic_tags
+        payloads.append(payload)
     return payloads
+
+
+def _topic_tags_for_label(label: str) -> list[str]:
+    normalized = label.casefold()
+    tags: list[str] = []
+    for needles, topic_tags in CANONICAL_TOPIC_TAG_ALIASES:
+        if not any(needle in normalized for needle in needles):
+            continue
+        for topic_tag in topic_tags:
+            if topic_tag not in tags:
+                tags.append(topic_tag)
+    return tags
 
 
 def select_subject_a_questions(

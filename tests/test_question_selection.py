@@ -45,8 +45,21 @@ def test_build_candidate_search_payloads_use_runtime_api_shape():
     payloads = build_candidate_search_payloads(targets)
 
     assert payloads == [
-        {"keywords": ["SQL join/group"], "examPart": "科目A", "limit": 20},
+        {"keywords": ["SQL join/group"], "topicTags": ["sql"], "examPart": "科目A", "limit": 20},
         {"keywords": ["DB design"], "examPart": "科目A", "limit": 10},
+    ]
+
+
+def test_build_candidate_search_payloads_adds_canonical_topic_tags():
+    targets = parse_practice_focus("Transaction 4, lock/recovery 3, SQL 2, security 1")
+
+    payloads = build_candidate_search_payloads(targets)
+
+    assert payloads == [
+        {"keywords": ["Transaction"], "topicTags": ["transaction"], "examPart": "科目A", "limit": 20},
+        {"keywords": ["lock/recovery"], "topicTags": ["transaction"], "examPart": "科目A", "limit": 15},
+        {"keywords": ["SQL"], "topicTags": ["sql"], "examPart": "科目A", "limit": 10},
+        {"keywords": ["security"], "topicTags": ["security"], "examPart": "科目A", "limit": 10},
     ]
 
 
