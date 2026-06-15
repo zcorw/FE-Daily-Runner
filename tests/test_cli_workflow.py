@@ -39,7 +39,7 @@ class FakeQuestionClient:
                     "questionText": f"Question {index}",
                     "choices": {"A": "alpha", "B": "beta"},
                     "answer": "A",
-                    "explanation": f"Explanation {index}",
+                    "explanation": f"中文说明 {index}",
                     "images": [{"publicPath": f"/assets/fe-siken/sample/q{index}.png"}],
                 }
                 for index, url in enumerate(urls, start=1)

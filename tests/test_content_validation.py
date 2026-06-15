@@ -17,7 +17,7 @@ def runtime_detail():
         "questionText": "Question text",
         "choices": {"ア": "A", "イ": "B"},
         "answer": "ア",
-        "explanation": "Explanation",
+        "explanation": "中文说明",
         "images": [{"publicPath": "/assets/fe-siken/r7/q1.png"}],
     }
 
@@ -28,7 +28,7 @@ def generated_content(**question_overrides):
         "question_text": "Question text",
         "choices": {"ア": "A", "イ": "B"},
         "answer": "ア",
-        "explanation": "Explanation",
+        "explanation": "中文说明",
         "images": [{"publicPath": "/assets/fe-siken/r7/q1.png"}],
     }
     question.update(question_overrides)
@@ -56,7 +56,7 @@ def generated_page_content() -> DailyLearningContent:
         "question_text": "Question text",
         "choices": {"A": "Alpha", "B": "Beta"},
         "answer": "A",
-        "explanation": "Explanation",
+        "explanation": "中文说明",
         "images": [{"publicPath": "/assets/fe-siken/r7/q1.png"}],
     }
     return DailyLearningContent.model_validate(
@@ -78,7 +78,7 @@ def generated_page_content() -> DailyLearningContent:
                     **base_question,
                     "source_url": f"https://example.test/q{index}",
                     "question_text": f"Question {index}",
-                    "explanation": f"Explanation {index}",
+                    "explanation": f"中文说明 {index}",
                     "images": [{"publicPath": f"/assets/fe-siken/r7/q{index}.png"}],
                 }
                 for index in range(1, 11)
@@ -99,9 +99,16 @@ def test_validate_question_facts_accepts_matching_runtime_details():
 
 def test_validate_question_facts_accepts_generated_teaching_explanation():
     validate_question_facts(
-        generated_content(explanation="Generated teaching explanation"),
+        generated_content(explanation="这是一段中文讲解。"),
         [runtime_detail()],
     )
+
+
+def test_validate_question_facts_rejects_non_chinese_generated_explanation():
+    with pytest.raises(ContentValidationError) as exc_info:
+        validate_question_facts(generated_content(explanation="Generated teaching explanation"), [runtime_detail()])
+
+    assert "explanation" in str(exc_info.value)
 
 
 def test_validate_question_facts_accepts_runtime_image_metadata():
@@ -214,7 +221,7 @@ def test_validate_daily_html_accepts_matching_page():
         ),
         ("source_url", lambda html: html.replace("https://example.test/q1", "https://example.test/changed")),
         ("answer", lambda html: html.replace("<strong>Correct answer</strong>: A", "<strong>Correct answer</strong>: B", 1)),
-        ("explanation", lambda html: html.replace("Explanation 1", "Changed explanation")),
+        ("explanation", lambda html: html.replace("中文说明 1", "Changed explanation")),
         (
             "image",
             lambda html: html.replace("/assets/fe-siken/r7/q1.png", "question-bank-runtime/r7/q1.png"),

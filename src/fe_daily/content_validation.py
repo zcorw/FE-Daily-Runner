@@ -1,3 +1,4 @@
+import re
 from typing import Any
 
 from bs4 import BeautifulSoup
@@ -38,6 +39,8 @@ def validate_question_facts(
         }
         if not generated.explanation.strip():
             raise ContentValidationError(f"question {index} explanation must not be blank")
+        if not _contains_cjk(generated.explanation):
+            raise ContentValidationError(f"question {index} explanation must be Chinese")
         for field, expected_value in expected.items():
             if actual[field] != expected_value:
                 raise ContentValidationError(
@@ -47,6 +50,10 @@ def validate_question_facts(
 
 def _image_public_paths(images: list[dict[str, Any]]) -> list[str | None]:
     return [image.get("publicPath") for image in images]
+
+
+def _contains_cjk(text: str) -> bool:
+    return re.search(r"[\u4e00-\u9fff]", text) is not None
 
 
 def validate_learning_content_quality(

@@ -38,7 +38,8 @@ def build_generation_payload(
                 "reading_assignment",
                 "practice_focus",
             ],
-            "output_language": "English",
+            "page_structure_language": "English",
+            "question_explanation_language": "Simplified Chinese",
             "page_format_reference": "FE Daily Study Task markdown",
             "required_page_sections_in_order": [
                 "Today's Goal",
