@@ -43,6 +43,23 @@ QuestionImages = Annotated[
         }
     ),
 ]
+DistractorExplanations = Annotated[
+    dict[str, str],
+    WithJsonSchema(
+        {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "label": {"type": "string"},
+                    "explanation": {"type": "string"},
+                },
+                "required": ["label", "explanation"],
+                "additionalProperties": False,
+            },
+        }
+    ),
+]
 
 Goals = Annotated[list[Any], WithJsonSchema({"type": "array", "items": {"type": "string"}})]
 TimeTable = Annotated[
@@ -139,6 +156,7 @@ class QuestionLearningBlock(BaseModel):
     answer: str = Field(min_length=1)
     explanation: str = Field(min_length=1)
     knowledge_point: str | None = None
+    distractor_explanations: DistractorExplanations = Field(default_factory=dict)
     images: QuestionImages = Field(default_factory=list)
 
     @field_validator("choices", mode="before")
@@ -155,6 +173,22 @@ class QuestionLearningBlock(BaseModel):
             text = choice.get("text")
             if isinstance(label, str) and isinstance(text, str):
                 normalized[label] = text
+        return normalized
+
+    @field_validator("distractor_explanations", mode="before")
+    @classmethod
+    def normalize_distractor_explanation_list(cls, value: Any) -> Any:
+        if not isinstance(value, list):
+            return value
+
+        normalized: dict[str, str] = {}
+        for item in value:
+            if not isinstance(item, dict):
+                continue
+            label = item.get("label")
+            explanation = item.get("explanation")
+            if isinstance(label, str) and isinstance(explanation, str):
+                normalized[label] = explanation
         return normalized
 
 

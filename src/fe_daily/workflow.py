@@ -108,7 +108,11 @@ def run_daily_workflow(
         question_client.search_candidates(payload).get("questions", [])
         for payload in candidate_payloads
     ]
-    selected_questions = select_subject_a_questions(candidate_groups, required_count=10)
+    selected_questions = select_subject_a_questions(
+        candidate_groups,
+        required_count=10,
+        focus_targets=focus_targets,
+    )
     details = load_required_details(
         question_client,
         [question["url"] for question in selected_questions],

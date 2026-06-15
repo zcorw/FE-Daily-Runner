@@ -128,7 +128,7 @@
       <ul>
         {% for key, value in question.choices.items() %}
         {% if key != question.answer %}
-        <li>{{ key }} This option does not match the required concept, calculation step, or exam condition.</li>
+        <li>{{ key }} {{ question.distractor_explanations[key] }}</li>
         {% endif %}
         {% endfor %}
       </ul>

@@ -18,6 +18,7 @@ def runtime_detail():
         "choices": {"ア": "A", "イ": "B"},
         "answer": "ア",
         "explanation": "中文说明",
+        "distractor_explanations": {"イ": "这个选项不符合题干条件"},
         "images": [{"publicPath": "/assets/fe-siken/r7/q1.png"}],
     }
 
@@ -29,6 +30,7 @@ def generated_content(**question_overrides):
         "choices": {"ア": "A", "イ": "B"},
         "answer": "ア",
         "explanation": "中文说明",
+        "distractor_explanations": {"イ": "这个选项不符合题干条件"},
         "images": [{"publicPath": "/assets/fe-siken/r7/q1.png"}],
     }
     question.update(question_overrides)
@@ -65,6 +67,7 @@ def generated_page_content() -> DailyLearningContent:
         "choices": {"A": "Alpha", "B": "Beta"},
         "answer": "A",
         "explanation": "中文说明",
+        "distractor_explanations": {"B": "这个选项不符合题干条件"},
         "images": [{"publicPath": "/assets/fe-siken/r7/q1.png"}],
     }
     return DailyLearningContent.model_validate(
@@ -147,6 +150,33 @@ def test_validate_question_facts_rejects_blank_generated_explanation():
         validate_question_facts(generated_content(explanation="   "), [runtime_detail()])
 
     assert "explanation" in str(exc_info.value)
+
+
+def test_validate_question_facts_rejects_missing_distractor_explanation():
+    with pytest.raises(ContentValidationError) as exc_info:
+        validate_question_facts(generated_content(distractor_explanations={}), [runtime_detail()])
+
+    assert "distractor_explanations" in str(exc_info.value)
+
+
+def test_validate_question_facts_rejects_repeated_distractor_explanations():
+    with pytest.raises(ContentValidationError) as exc_info:
+        validate_question_facts(
+            generated_content(
+                choices={"A": "A", "B": "B", "C": "C"},
+                answer="A",
+                distractor_explanations={"B": "同一个错误说明", "C": "同一个错误说明"},
+            ),
+            [
+                {
+                    **runtime_detail(),
+                    "choices": {"A": "A", "B": "B", "C": "C"},
+                    "answer": "A",
+                }
+            ],
+        )
+
+    assert "distractor_explanations" in str(exc_info.value)
 
 
 @pytest.mark.parametrize(

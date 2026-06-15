@@ -50,6 +50,7 @@ def validate_question_facts(
                 raise ContentValidationError(
                     f"question {index} {field} changed: expected {expected_value!r}, got {actual[field]!r}"
                 )
+        _validate_distractor_explanations(index, generated)
 
 
 def _image_public_paths(images: list[dict[str, Any]]) -> list[str | None]:
@@ -58,6 +59,29 @@ def _image_public_paths(images: list[dict[str, Any]]) -> list[str | None]:
 
 def _contains_cjk(text: str) -> bool:
     return re.search(r"[\u4e00-\u9fff]", text) is not None
+
+
+def _validate_distractor_explanations(index: int, generated: Any) -> None:
+    explanations = generated.distractor_explanations
+    if not isinstance(explanations, dict):
+        raise ContentValidationError(f"question {index} distractor_explanations must be an object")
+
+    wrong_labels = [label for label in generated.choices if label != generated.answer]
+    values: list[str] = []
+    for label in wrong_labels:
+        value = explanations.get(label)
+        if not isinstance(value, str) or not value.strip():
+            raise ContentValidationError(
+                f"question {index} distractor_explanations missing explanation for {label}"
+            )
+        if not _contains_cjk(value):
+            raise ContentValidationError(
+                f"question {index} distractor_explanations for {label} must be Chinese"
+            )
+        values.append(value.strip())
+
+    if len(values) > 1 and len(set(values)) != len(values):
+        raise ContentValidationError(f"question {index} distractor_explanations must not be repeated")
 
 
 def validate_learning_content_quality(

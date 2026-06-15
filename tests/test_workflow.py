@@ -93,6 +93,7 @@ class FakeGenerator:
                         "choices": question["choices"],
                         "answer": question["answer"],
                         "explanation": question["explanation"],
+                        "distractor_explanations": {"B": "B不是正确选项"},
                         "images": question["images"],
                     }
                     for question in payload["questions"]

@@ -14,6 +14,7 @@ def valid_question():
         "answer": "ア",
         "explanation": "Explanation",
         "knowledge_point": "SQL",
+        "distractor_explanations": {"イ": "イは正解ではない"},
     }
 
 
@@ -65,6 +66,7 @@ def test_question_choices_accept_openai_choice_list_and_normalize_to_mapping():
             ],
             "answer": "A",
             "explanation": "Explanation",
+            "distractor_explanations": [{"label": "B", "explanation": "B is not correct"}],
         }
     ]
 

@@ -14,6 +14,9 @@ class FocusTarget:
 
 
 FOCUS_PART_PATTERN = re.compile(r"^(?P<label>.+?)\s+(?P<count>\d+)$")
+SUBJECT_A_EXAM_PART = "科目A"
+LEGACY_MOJIBAKE_SUBJECT_A_EXAM_PART = "绉戠洰A"
+SUBJECT_A_EXAM_PARTS = {SUBJECT_A_EXAM_PART, LEGACY_MOJIBAKE_SUBJECT_A_EXAM_PART}
 
 
 def parse_practice_focus(practice_focus: str) -> list[FocusTarget]:
@@ -51,7 +54,7 @@ def build_candidate_search_payloads(targets: list[FocusTarget]) -> list[dict[str
         payloads.append(
             {
                 "keywords": [target.label],
-                "examPart": "科目A",
+                "examPart": SUBJECT_A_EXAM_PART,
                 "limit": max(target.count * 5, 10),
             }
         )
@@ -61,25 +64,62 @@ def build_candidate_search_payloads(targets: list[FocusTarget]) -> list[dict[str
 def select_subject_a_questions(
     candidate_groups: list[list[dict[str, Any]]],
     *,
-    required_count: int = 10,
+    required_count: int | None = None,
+    focus_targets: list[FocusTarget] | None = None,
 ) -> list[dict[str, Any]]:
+    if required_count is None:
+        required_count = sum(target.count for target in focus_targets) if focus_targets is not None else 10
+
     selected: list[dict[str, Any]] = []
     seen_urls: set[str] = set()
 
+    if focus_targets is not None:
+        for group, target in zip(candidate_groups, focus_targets, strict=False):
+            _append_unique_subject_a_questions(
+                selected,
+                seen_urls,
+                group,
+                remaining_count=target.count,
+            )
+        if len(selected) == required_count:
+            return selected
+
     for group in candidate_groups:
-        for question in group:
-            if question.get("examPart") != "科目A":
-                continue
-            url = question.get("url")
-            if not isinstance(url, str) or not url:
-                continue
-            if url in seen_urls:
-                continue
-            selected.append(question)
-            seen_urls.add(url)
-            if len(selected) == required_count:
-                return selected
+        _append_unique_subject_a_questions(
+            selected,
+            seen_urls,
+            group,
+            remaining_count=required_count - len(selected),
+        )
+        if len(selected) == required_count:
+            return selected
 
     raise InsufficientQuestionsError(
-        f"needed {required_count} 科目A questions, found {len(selected)}"
+        f"needed {required_count} {SUBJECT_A_EXAM_PART} questions, found {len(selected)}"
     )
+
+
+def _append_unique_subject_a_questions(
+    selected: list[dict[str, Any]],
+    seen_urls: set[str],
+    candidates: list[dict[str, Any]],
+    *,
+    remaining_count: int,
+) -> None:
+    if remaining_count <= 0:
+        return
+
+    added = 0
+    for question in candidates:
+        if question.get("examPart") not in SUBJECT_A_EXAM_PARTS:
+            continue
+        url = question.get("url")
+        if not isinstance(url, str) or not url:
+            continue
+        if url in seen_urls:
+            continue
+        selected.append(question)
+        seen_urls.add(url)
+        added += 1
+        if added == remaining_count:
+            return

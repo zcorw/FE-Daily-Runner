@@ -24,6 +24,7 @@ def valid_content_payload():
                 "choices": {"ア": "A"},
                 "answer": "ア",
                 "explanation": "Explanation",
+                "distractor_explanations": {},
             }
         ],
     }

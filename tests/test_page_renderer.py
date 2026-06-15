@@ -69,6 +69,11 @@ def daily_content() -> DailyLearningContent:
                     "answer": "A",
                     "explanation": f"Explanation {index}",
                     "knowledge_point": "SQL",
+                    "distractor_explanations": {
+                        "B": f"B is wrong for question {index}",
+                        "C": f"C is wrong for question {index}",
+                        "D": f"D is wrong for question {index}",
+                    },
                     "images": [{"publicPath": f"/assets/fe-siken/q{index}.png"}],
                 }
                 for index in range(1, 11)
@@ -126,6 +131,15 @@ def test_render_daily_page_does_not_emit_repeated_term_placeholders():
     assert "Do not confuse the term with a neighboring concept." not in html
     assert "exam note 0" in html
     assert "trap 0" in html
+
+
+def test_render_daily_page_uses_question_specific_distractor_explanations():
+    html = render_daily_page(daily_content(), template_dir=ROOT / "templates")
+
+    assert "This option does not match the required concept" not in html
+    assert "B is wrong for question 1" in html
+    assert "C is wrong for question 1" in html
+    assert "D is wrong for question 1" in html
 
 
 def test_render_index_page_links_current_day_once_when_entries_repeat():

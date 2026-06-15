@@ -67,6 +67,34 @@ def test_select_subject_a_questions_returns_exactly_required_count():
     assert selected == candidates[:10]
 
 
+def test_select_subject_a_questions_honors_focus_target_counts():
+    group_one = [
+        {"url": f"https://example.test/sql{i}", "examPart": "科目A"}
+        for i in range(1, 8)
+    ]
+    group_two = [
+        {"url": f"https://example.test/law{i}", "examPart": "科目A"}
+        for i in range(1, 8)
+    ]
+
+    selected = select_subject_a_questions(
+        [group_one, group_two],
+        focus_targets=[
+            FocusTarget(label="SQL", count=4),
+            FocusTarget(label="law", count=2),
+        ],
+    )
+
+    assert [question["url"] for question in selected] == [
+        "https://example.test/sql1",
+        "https://example.test/sql2",
+        "https://example.test/sql3",
+        "https://example.test/sql4",
+        "https://example.test/law1",
+        "https://example.test/law2",
+    ]
+
+
 def test_select_subject_a_questions_filters_non_subject_a_and_dedupes_urls():
     group_one = [
         {"url": "https://example.test/q1", "examPart": "科目A"},
