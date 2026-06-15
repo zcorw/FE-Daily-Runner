@@ -77,8 +77,8 @@
         <tr>
           <td>{{ item.term }}</td>
           <td>{{ item.meaning }}</td>
-          <td>{% if item.exam_note is defined %}{{ item.exam_note }}{% else %}Connect this term to the planned practice topic.{% endif %}</td>
-          <td>{% if item.trap is defined %}{{ item.trap }}{% else %}Do not confuse the term with a neighboring concept.{% endif %}</td>
+          <td>{{ item.exam_note }}</td>
+          <td>{{ item.trap }}</td>
         </tr>
         {% endfor %}
       </tbody>

@@ -70,6 +70,8 @@ Terms = Annotated[
                 "properties": {
                     "term": {"type": "string"},
                     "meaning": {"type": "string"},
+                    "exam_note": {"type": "string"},
+                    "trap": {"type": "string"},
                 },
             },
         }

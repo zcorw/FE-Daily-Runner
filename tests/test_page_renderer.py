@@ -51,7 +51,15 @@ def daily_content() -> DailyLearningContent:
             },
             "goals": ["Practice subject A questions"],
             "time_table": [{"minutes": 20, "task": "Read"}, {"minutes": 40, "task": "Practice"}],
-            "terms": [{"term": f"term-{index}", "meaning": "meaning"} for index in range(10)],
+            "terms": [
+                {
+                    "term": f"term-{index}",
+                    "meaning": "meaning",
+                    "exam_note": f"exam note {index}",
+                    "trap": f"trap {index}",
+                }
+                for index in range(10)
+            ],
             "knowledge_points": [{"title": "GROUP BY", "body": "Group rows before filtering."}],
             "questions": [
                 {
@@ -108,6 +116,16 @@ def test_render_daily_page_matches_reference_markdown_section_language():
     assert "Why the other choices are wrong" in body_text
     assert "Review Area" in headings
     assert "Tomorrow's Suggestion" in headings
+
+
+def test_render_daily_page_does_not_emit_repeated_term_placeholders():
+    content = daily_content()
+    html = render_daily_page(content, template_dir=ROOT / "templates")
+
+    assert "Connect this term to the planned practice topic." not in html
+    assert "Do not confuse the term with a neighboring concept." not in html
+    assert "exam note 0" in html
+    assert "trap 0" in html
 
 
 def test_render_index_page_links_current_day_once_when_entries_repeat():

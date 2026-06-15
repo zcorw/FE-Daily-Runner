@@ -43,7 +43,15 @@ def generated_content(**question_overrides):
                 "practice_focus": "SQL 10",
             },
             "time_table": [{"minutes": 10}, {"minutes": 20}, {"minutes": 20}, {"minutes": 10}],
-            "terms": [{"term": f"term-{index}", "meaning": "meaning"} for index in range(10)],
+            "terms": [
+                {
+                    "term": f"term-{index}",
+                    "meaning": "meaning",
+                    "exam_note": f"exam note {index}",
+                    "trap": f"trap {index}",
+                }
+                for index in range(10)
+            ],
             "questions": [question],
             "tomorrow_suggestion": {"theme": "Transaction"},
         }
@@ -71,7 +79,15 @@ def generated_page_content() -> DailyLearningContent:
             },
             "goals": ["Practice"],
             "time_table": [{"minutes": 60, "task": "Practice"}],
-            "terms": [{"term": f"term-{index}", "meaning": "meaning"} for index in range(10)],
+            "terms": [
+                {
+                    "term": f"term-{index}",
+                    "meaning": "meaning",
+                    "exam_note": f"exam note {index}",
+                    "trap": f"trap {index}",
+                }
+                for index in range(10)
+            ],
             "knowledge_points": [{"title": "SQL", "body": "Group rows."}],
             "questions": [
                 {
@@ -171,6 +187,27 @@ def test_validate_learning_content_quality_requires_at_least_10_terms():
         validate_learning_content_quality(content, expected_plan())
 
     assert "terms" in str(exc_info.value)
+
+
+def test_validate_learning_content_quality_rejects_missing_term_exam_note_or_trap():
+    content = generated_content()
+    content.terms[0].pop("exam_note")
+
+    with pytest.raises(ContentValidationError) as exc_info:
+        validate_learning_content_quality(content, expected_plan())
+
+    assert "exam_note" in str(exc_info.value)
+
+
+def test_validate_learning_content_quality_rejects_repeated_term_exam_notes_or_traps():
+    content = generated_content()
+    for term in content.terms:
+        term["exam_note"] = "same note"
+
+    with pytest.raises(ContentValidationError) as exc_info:
+        validate_learning_content_quality(content, expected_plan())
+
+    assert "exam_note" in str(exc_info.value)
 
 
 def test_validate_learning_content_quality_requires_approximately_60_minutes():

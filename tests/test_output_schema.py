@@ -29,7 +29,14 @@ def valid_content_payload():
         },
         "goals": ["Review SQL joins"],
         "time_table": [{"minutes": 20, "task": "Practice"}],
-        "terms": [{"term": "GROUP BY", "meaning": "集計"}],
+        "terms": [
+            {
+                "term": "GROUP BY",
+                "meaning": "集計",
+                "exam_note": "集計単位と選択列の関係を確認する。",
+                "trap": "WHEREとHAVINGの役割を混同しない。",
+            }
+        ],
         "knowledge_points": [{"title": "SQL", "body": "Use grouping carefully."}],
         "questions": [valid_question()],
         "review_table_template": [{"question_no": 1}],

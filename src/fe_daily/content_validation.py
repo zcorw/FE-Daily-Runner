@@ -7,6 +7,10 @@ from fe_daily.output_schema import DailyLearningContent
 
 
 DEFAULT_PUBLIC_IMAGE_PREFIXES = ("/assets/fe-siken/",)
+TERM_PLACEHOLDER_VALUES = (
+    "Connect this term to the planned practice topic.",
+    "Do not confuse the term with a neighboring concept.",
+)
 
 
 class ContentValidationError(ValueError):
@@ -81,6 +85,7 @@ def validate_learning_content_quality(
 
     if len(content.terms) < 10:
         raise ContentValidationError(f"terms must contain at least 10 items, got {len(content.terms)}")
+    _validate_term_table(content.terms)
 
     total_minutes = 0
     for entry in content.time_table:
@@ -91,6 +96,27 @@ def validate_learning_content_quality(
 
     if not content.tomorrow_suggestion:
         raise ContentValidationError("tomorrow_suggestion must not be empty")
+
+
+def _validate_term_table(terms: list[Any]) -> None:
+    exam_notes: list[str] = []
+    traps: list[str] = []
+    for index, item in enumerate(terms):
+        if not isinstance(item, dict):
+            raise ContentValidationError(f"terms {index} must be an object")
+        for field in ("term", "meaning", "exam_note", "trap"):
+            value = item.get(field)
+            if not isinstance(value, str) or not value.strip():
+                raise ContentValidationError(f"terms {index} {field} must not be blank")
+            if value.strip() in TERM_PLACEHOLDER_VALUES:
+                raise ContentValidationError(f"terms {index} {field} must not use placeholder text")
+        exam_notes.append(item["exam_note"].strip())
+        traps.append(item["trap"].strip())
+
+    if len(set(exam_notes)) != len(exam_notes):
+        raise ContentValidationError("terms exam_note values must be specific, not repeated")
+    if len(set(traps)) != len(traps):
+        raise ContentValidationError("terms trap values must be specific, not repeated")
 
 
 def validate_daily_html(

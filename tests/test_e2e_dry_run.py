@@ -55,7 +55,15 @@ class FakeGenerator:
                 },
                 "goals": ["Practice"],
                 "time_table": [{"minutes": 60, "task": "Practice"}],
-                "terms": [{"term": f"term-{index}", "meaning": "meaning"} for index in range(10)],
+                "terms": [
+                    {
+                        "term": f"term-{index}",
+                        "meaning": "meaning",
+                        "exam_note": f"exam note {index}",
+                        "trap": f"trap {index}",
+                    }
+                    for index in range(10)
+                ],
                 "knowledge_points": [{"title": "SQL", "body": "Group rows."}],
                 "questions": [
                     {
