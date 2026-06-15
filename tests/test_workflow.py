@@ -57,11 +57,13 @@ class FakeQuestionClient:
 class FakeGenerator:
     def __init__(self) -> None:
         self.payload: dict[str, Any] | None = None
+        self.payloads: list[dict[str, Any]] = []
         self.call_count = 0
 
     def generate(self, payload: dict[str, Any]) -> DailyLearningContent:
         self.call_count += 1
         self.payload = payload
+        self.payloads.append(payload)
         return DailyLearningContent.model_validate(
             {
                 "date": payload["plan"]["date"],
@@ -262,6 +264,8 @@ def test_run_daily_workflow_retries_model_quality_failures(tmp_path):
 
     assert result.status == "success"
     assert generator.call_count == 2
+    assert "previous_content_validation_error" in generator.payloads[1]
+    assert "terms must contain at least 10 items" in generator.payloads[1]["previous_content_validation_error"]
 
 
 def test_run_daily_workflow_fail_policy_raises_for_existing_page_before_openai(tmp_path):

@@ -252,7 +252,17 @@ def _generate_validated_content(
 ) -> tuple[DailyLearningContent, str]:
     last_error: ContentValidationError | None = None
     for _ in range(max_attempts):
-        content = generator.generate(generation_payload)
+        request_payload = generation_payload
+        if last_error is not None:
+            request_payload = {
+                **generation_payload,
+                "previous_content_validation_error": str(last_error),
+                "instruction": (
+                    "Previous content quality validation failed. Fix that exact issue while preserving "
+                    "all Runtime question facts and the plan reference."
+                ),
+            }
+        content = generator.generate(request_payload)
         _restore_plan_fields(content, plan_entry)
         try:
             validate_question_facts(content, runtime_details)
