@@ -75,13 +75,22 @@ def test_question_choices_accept_openai_choice_list_and_normalize_to_mapping():
     assert content.questions[0].choices == {"A": "alpha", "B": "beta"}
 
 
-@pytest.mark.parametrize("field", ["date", "main_theme", "plan_reference", "questions"])
+@pytest.mark.parametrize("field", ["date", "main_theme", "plan_reference"])
 def test_daily_learning_content_rejects_missing_required_top_level_fields(field):
     payload = valid_content_payload()
     payload.pop(field)
 
     with pytest.raises(ValidationError):
         DailyLearningContent.model_validate(payload)
+
+
+def test_daily_learning_content_allows_questions_to_be_injected_later():
+    payload = valid_content_payload()
+    payload.pop("questions")
+
+    content = DailyLearningContent.model_validate(payload)
+
+    assert content.questions == []
 
 
 @pytest.mark.parametrize("field", ["source_url", "question_text", "choices", "answer", "explanation"])

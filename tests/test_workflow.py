@@ -46,7 +46,14 @@ class FakeQuestionClient:
                     "questionText": f"Question {index}",
                     "choices": {"A": "alpha", "B": "beta"},
                     "answer": "A",
-                    "explanation": f"中文说明 {index}",
+                    "explanation": f"これは題庫の解説です {index}",
+                    "explanationJa": f"これは題庫の解説です {index}",
+                    "distractor_explanations": {"B": f"Bは題庫の誤答解説です {index}"},
+                    "distractorExplanationsJa": {"B": f"Bは題庫の誤答解説です {index}"},
+                    "knowledge_point": f"題庫知識点 {index}",
+                    "knowledgePointJa": f"題庫知識点 {index}",
+                    "examPointJa": f"試験での着眼点 {index}",
+                    "commonTrapJa": f"よくある誤り {index}",
                     "images": [{"publicPath": f"/assets/fe-siken/q{index}.png"}],
                 }
                 for index, url in enumerate(urls, start=1)
@@ -62,44 +69,34 @@ class FakeGenerator:
 
     def generate(self, payload: dict[str, Any]) -> DailyLearningContent:
         self.call_count += 1
+        assert "questions" not in payload
         self.payload = payload
         self.payloads.append(payload)
         return DailyLearningContent.model_validate(
             {
                 "date": payload["plan"]["date"],
-                "title": "Daily FE Study",
+                "title": "FE Daily 学習タスク",
                 "main_theme": payload["plan"]["main_theme"],
                 "plan_reference": {
                     "date": payload["plan"]["date"],
                     "reading_assignment": payload["plan"]["reading_assignment"],
                     "practice_focus": payload["plan"]["practice_focus"],
                 },
-                "goals": ["Practice subject A"],
-                "time_table": [{"minutes": 60, "task": "Practice"}],
+                "goals": ["科目Aの問題を練習する。"],
+                "time_table": [{"minutes": 60, "task": "問題を解いて復習する"}],
                 "terms": [
                     {
                         "term": f"term-{index}",
-                        "meaning": "meaning",
-                        "exam_note": f"exam note {index}",
-                        "trap": f"trap {index}",
+                        "meaning": "意味を確認する。",
+                        "exam_note": f"試験での注意点 {index}",
+                        "trap": f"混同しやすい点 {index}",
                     }
                     for index in range(10)
                 ],
-                "knowledge_points": [{"title": "SQL", "body": "Group rows."}],
-                "questions": [
-                    {
-                        "source_url": question["source_url"],
-                        "question_text": question["question_text"],
-                        "choices": question["choices"],
-                        "answer": question["answer"],
-                        "explanation": question["explanation"],
-                        "distractor_explanations": {"B": "B不是正确选项"},
-                        "images": question["images"],
-                    }
-                    for question in payload["questions"]
-                ],
+                "knowledge_points": [{"title": "SQLの要点", "body": "集計条件を確認する。"}],
+                "questions": [],
                 "review_table_template": [{"question_no": index} for index in range(1, 11)],
-                "tomorrow_suggestion": {"theme": "Transactions"},
+                "tomorrow_suggestion": {"theme": "トランザクション"},
             }
         )
 
@@ -169,9 +166,12 @@ def test_run_daily_workflow_dry_run_uses_full_chain_without_formal_write(tmp_pat
     assert result.status == "success"
     assert question_client.calls == ["health", "search_candidates", "details_batch"]
     assert generator.payload is not None
-    assert len(generator.payload["questions"]) == 10
+    assert "questions" not in generator.payload
     assert result.dry_run_artifacts is not None
     assert result.dry_run_artifacts.preview_html.exists()
+    validated = result.dry_run_artifacts.validated_json.read_text(encoding="utf-8")
+    assert "これは題庫の解説です 1" in validated
+    assert "Bは題庫の誤答解説です 1" in validated
     assert not daily_page_path(settings.output_dir, date(2026, 6, 13)).exists()
 
 
@@ -267,6 +267,14 @@ def test_run_daily_workflow_retries_model_quality_failures(tmp_path):
     assert generator.call_count == 2
     assert "previous_content_validation_error" in generator.payloads[1]
     assert "terms must contain at least 10 items" in generator.payloads[1]["previous_content_validation_error"]
+    assert generator.payloads[1]["content_quality_requirements"]["minimum_key_terms"] == 10
+    assert generator.payloads[1]["content_quality_requirements"]["key_terms_table_fields"] == [
+        "term",
+        "meaning",
+        "exam_note",
+        "trap",
+    ]
+    assert generator.payloads[1]["content_quality_requirements"]["generated_learning_content_language"] == "Japanese"
 
 
 def test_run_daily_workflow_fail_policy_raises_for_existing_page_before_openai(tmp_path):

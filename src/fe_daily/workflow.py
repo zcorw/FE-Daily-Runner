@@ -12,7 +12,7 @@ from fe_daily.content_validation import (
 )
 from fe_daily.dry_run import DryRunArtifactPaths, write_dry_run_artifacts
 from fe_daily.health_check import HealthStatus, check_runtime_health
-from fe_daily.output_schema import DailyLearningContent
+from fe_daily.output_schema import DailyLearningContent, QuestionLearningBlock
 from fe_daily.output_writer import atomic_write_text
 from fe_daily.page_renderer import render_daily_page, render_index_page
 from fe_daily.paths import ExistingOutputDecision, output_targets, resolve_existing_output
@@ -261,6 +261,7 @@ def _generate_validated_content(
             request_payload = {
                 **generation_payload,
                 "previous_content_validation_error": str(last_error),
+                "content_quality_requirements": _content_quality_requirements(),
                 "instruction": (
                     "Previous content quality validation failed. Fix that exact issue while preserving "
                     "all Runtime question facts and the plan reference."
@@ -268,6 +269,7 @@ def _generate_validated_content(
             }
         content = generator.generate(request_payload)
         _restore_plan_fields(content, plan_entry)
+        _inject_runtime_questions(content, runtime_details)
         try:
             validate_question_facts(content, runtime_details)
             validate_learning_content_quality(content, _expected_plan(plan_entry))
@@ -281,6 +283,81 @@ def _generate_validated_content(
     if last_error is not None:
         raise last_error
     raise RuntimeError("content generation did not run")
+
+
+def _inject_runtime_questions(content: DailyLearningContent, runtime_details: list[dict[str, Any]]) -> None:
+    content.questions = [
+        QuestionLearningBlock.model_validate(_question_block_from_runtime_detail(detail))
+        for detail in runtime_details
+    ]
+
+
+def _question_block_from_runtime_detail(detail: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "source_url": detail.get("url"),
+        "question_text": detail.get("questionText"),
+        "choices": detail.get("choices"),
+        "answer": detail.get("answer"),
+        "explanation": _learning_field(detail, "explanation", "explanationJa"),
+        "knowledge_point": _learning_field(detail, "knowledge_point", "knowledgePointJa"),
+        "distractor_explanations": _learning_field(
+            detail,
+            "distractor_explanations",
+            "distractorExplanationsJa",
+            default={},
+        ),
+        "images": detail.get("images", []),
+        "exam_point": _learning_field(detail, "exam_point", "examPointJa"),
+        "common_trap": _learning_field(detail, "common_trap", "commonTrapJa"),
+        "syllabus_area": detail.get("syllabusArea"),
+        "topic_tags": detail.get("topicTags", []),
+        "knowledge_points": detail.get("knowledgePoints", []),
+    }
+
+
+def _learning_field(
+    detail: dict[str, Any],
+    normalized_key: str,
+    runtime_key: str,
+    *,
+    default: Any = None,
+) -> Any:
+    if normalized_key in detail and detail[normalized_key] is not None:
+        return detail[normalized_key]
+    if runtime_key in detail and detail[runtime_key] is not None:
+        return detail[runtime_key]
+    learning = detail.get("learningExplanation")
+    if isinstance(learning, dict) and learning.get(runtime_key) is not None:
+        return learning[runtime_key]
+    return default
+
+
+def _content_quality_requirements() -> dict[str, Any]:
+    return {
+        "minimum_key_terms": 10,
+        "key_terms_table_fields": [
+            "term",
+            "meaning",
+            "exam_note",
+            "trap",
+        ],
+        "key_terms_instruction": (
+            "Return at least 10 distinct key terms. Every key term must include a non-empty term, "
+            "meaning, exam_note, and trap. The exam_note and trap values must be specific and must "
+            "not repeat across rows. All generated learning text must be written in Japanese."
+        ),
+        "generated_learning_content_language": "Japanese",
+        "japanese_content_fields": [
+            "goals",
+            "time_table.task",
+            "terms.meaning",
+            "terms.exam_note",
+            "terms.trap",
+            "knowledge_points.title",
+            "knowledge_points.body",
+            "tomorrow_suggestion.theme",
+        ],
+    }
 
 
 def _absolute_page_url(settings: DailyRunnerSettings, page_url: str) -> str:

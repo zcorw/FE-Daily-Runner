@@ -43,8 +43,8 @@ def validate_question_facts(
         }
         if not generated.explanation.strip():
             raise ContentValidationError(f"question {index} explanation must not be blank")
-        if not _contains_cjk(generated.explanation):
-            raise ContentValidationError(f"question {index} explanation must be Chinese")
+        if not _contains_japanese_text(generated.explanation):
+            raise ContentValidationError(f"question {index} explanation must be Japanese")
         for field, expected_value in expected.items():
             if actual[field] != expected_value:
                 raise ContentValidationError(
@@ -57,8 +57,8 @@ def _image_public_paths(images: list[dict[str, Any]]) -> list[str | None]:
     return [image.get("publicPath") for image in images]
 
 
-def _contains_cjk(text: str) -> bool:
-    return re.search(r"[\u4e00-\u9fff]", text) is not None
+def _contains_japanese_text(text: str) -> bool:
+    return re.search(r"[\u3040-\u30ff]", text) is not None
 
 
 def _validate_distractor_explanations(index: int, generated: Any) -> None:
@@ -74,9 +74,9 @@ def _validate_distractor_explanations(index: int, generated: Any) -> None:
             raise ContentValidationError(
                 f"question {index} distractor_explanations missing explanation for {label}"
             )
-        if not _contains_cjk(value):
+        if not _contains_japanese_text(value):
             raise ContentValidationError(
-                f"question {index} distractor_explanations for {label} must be Chinese"
+                f"question {index} distractor_explanations for {label} must be Japanese"
             )
         values.append(value.strip())
 
@@ -110,6 +110,7 @@ def validate_learning_content_quality(
     if len(content.terms) < 10:
         raise ContentValidationError(f"terms must contain at least 10 items, got {len(content.terms)}")
     _validate_term_table(content.terms)
+    _validate_generated_learning_text_is_japanese(content)
 
     total_minutes = 0
     for entry in content.time_table:
@@ -141,6 +142,36 @@ def _validate_term_table(terms: list[Any]) -> None:
         raise ContentValidationError("terms exam_note values must be specific, not repeated")
     if len(set(traps)) != len(traps):
         raise ContentValidationError("terms trap values must be specific, not repeated")
+
+
+def _validate_generated_learning_text_is_japanese(content: DailyLearningContent) -> None:
+    for index, value in enumerate(content.goals):
+        _require_japanese_text(value, f"goals {index}")
+
+    for index, item in enumerate(content.time_table):
+        if isinstance(item, dict) and "task" in item:
+            _require_japanese_text(item["task"], f"time_table {index} task")
+
+    for index, item in enumerate(content.terms):
+        if not isinstance(item, dict):
+            continue
+        for field in ("meaning", "exam_note", "trap"):
+            _require_japanese_text(item.get(field), f"terms {index} {field}")
+
+    for index, item in enumerate(content.knowledge_points):
+        if not isinstance(item, dict):
+            continue
+        for field in ("title", "body"):
+            _require_japanese_text(item.get(field), f"knowledge_points {index} {field}")
+
+    theme = content.tomorrow_suggestion.get("theme")
+    if theme is not None:
+        _require_japanese_text(theme, "tomorrow_suggestion theme")
+
+
+def _require_japanese_text(value: Any, field_name: str) -> None:
+    if not isinstance(value, str) or not _contains_japanese_text(value):
+        raise ContentValidationError(f"{field_name} must be Japanese")
 
 
 def validate_daily_html(
@@ -186,7 +217,7 @@ def validate_daily_html(
         if expected.question_text not in rendered_text:
             raise ContentValidationError(f"question {index} question_text missing")
         answer_text = _question_answer_text(rendered)
-        if answer_text != f"Correct answer: {expected.answer}":
+        if answer_text != f"正答: {expected.answer}":
             raise ContentValidationError(f"question {index} answer mismatch")
         if expected.explanation not in rendered_text:
             raise ContentValidationError(f"question {index} explanation missing")
@@ -208,7 +239,7 @@ def _validate_no_secret_leakage(html: str) -> None:
 def _question_answer_text(rendered_question: Any) -> str:
     for paragraph in rendered_question.find_all("p"):
         text = paragraph.get_text("", strip=True)
-        if text.startswith("Correct answer:"):
+        if text.startswith("正答:"):
             return text
     return ""
 

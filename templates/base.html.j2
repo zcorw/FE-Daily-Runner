@@ -4,6 +4,64 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}FE Daily{% endblock %}</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f6f8f5;
+      --card: #ffffff;
+      --ink: #13181c;
+      --muted: #5f686d;
+      --line: #d9dfdc;
+      --green: #0a6b4f;
+      --green-soft: #d7efe3;
+      --blue: #0d407f;
+      --blue-soft: #dbeafe;
+      --amber: #b86608;
+      --amber-soft: #ffedc7;
+      --red: #a82127;
+      --red-soft: #f8e0de;
+      --shadow: 0 16px 36px rgba(10, 24, 24, 0.08);
+      font-family: Inter, "Noto Sans JP", "Noto Sans SC", "Yu Gothic", Arial, sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      line-height: 1.55;
+    }
+
+    body > header {
+      padding: 14px 24px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.86);
+      backdrop-filter: blur(8px);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    body > header a {
+      color: var(--green);
+      font-weight: 700;
+      text-decoration: none;
+    }
+
+    main { width: 100%; }
+
+    a { color: var(--blue); }
+    code { font-family: "SFMono-Regular", Consolas, monospace; }
+
+    img {
+      max-width: 100%;
+      height: auto;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+    }
+  </style>
 </head>
 <body>
   <header>

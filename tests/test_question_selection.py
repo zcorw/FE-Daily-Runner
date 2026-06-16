@@ -63,6 +63,18 @@ def test_build_candidate_search_payloads_adds_canonical_topic_tags():
     ]
 
 
+def test_build_candidate_search_payloads_normalizes_compound_security_and_backup_labels():
+    targets = parse_practice_focus("WAF/IDS/DMZ 3, security management 3, audit/backup 2")
+
+    payloads = build_candidate_search_payloads(targets)
+
+    assert payloads == [
+        {"keywords": ["security"], "topicTags": ["security"], "examPart": "科目A", "limit": 15},
+        {"keywords": ["security"], "topicTags": ["security"], "examPart": "科目A", "limit": 15},
+        {"keywords": ["availability"], "topicTags": ["availability"], "examPart": "科目A", "limit": 10},
+    ]
+
+
 def test_build_candidate_search_payloads_rejects_non_positive_counts():
     with pytest.raises(ValueError):
         build_candidate_search_payloads([FocusTarget(label="SQL", count=0)])

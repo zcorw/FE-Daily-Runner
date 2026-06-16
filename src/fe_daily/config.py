@@ -31,6 +31,7 @@ class DailyRunnerSettings(BaseSettings):
     openai_model: str = "gpt-5.5"
     openai_reasoning_effort: str = "low"
     openai_text_verbosity: str = "medium"
+    openai_token_usage_log_path: Path = Path("logs/openai_token_usage.jsonl")
 
     question_bank_service_url: str = "http://question-bank-runtime:8000"
     question_bank_timeout_seconds: int = Field(default=20, gt=0)
@@ -71,6 +72,7 @@ class DailyRunnerSettings(BaseSettings):
         "output_dir",
         "template_dir",
         "markdown_output_dir",
+        "openai_token_usage_log_path",
         "study_plan_path",
         "weak_points_path",
         "mistake_log_path",

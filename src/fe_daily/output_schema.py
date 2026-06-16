@@ -203,7 +203,7 @@ class DailyLearningContent(BaseModel):
     time_table: TimeTable = Field(default_factory=list)
     terms: Terms = Field(default_factory=list)
     knowledge_points: KnowledgePoints = Field(default_factory=list)
-    questions: list[QuestionLearningBlock] = Field(min_length=1)
+    questions: list[QuestionLearningBlock] = Field(default_factory=list)
     review_table_template: ReviewTable = Field(default_factory=list)
     tomorrow_suggestion: TomorrowSuggestion = Field(default_factory=dict)
     progress_summary: ProgressSummary = Field(default_factory=dict)

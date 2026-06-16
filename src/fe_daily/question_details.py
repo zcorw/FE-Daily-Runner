@@ -54,6 +54,10 @@ def _validate_detail(detail: Any, index: int) -> None:
     if not isinstance(choices, dict) or not choices:
         raise QuestionDetailValidationError(f"question detail {index} missing choices")
 
+    distractor_explanations = detail.get("distractor_explanations")
+    if not isinstance(distractor_explanations, dict) or not distractor_explanations:
+        raise QuestionDetailValidationError(f"question detail {index} missing distractor_explanations")
+
 
 def _normalize_detail_images(detail: dict[str, Any]) -> None:
     images = detail.get("images", [])

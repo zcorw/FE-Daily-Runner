@@ -14,7 +14,7 @@ def question_detail(url="https://example.test/q1"):
     }
 
 
-def test_build_generation_payload_contains_plan_context_and_question_facts():
+def test_build_generation_payload_contains_plan_context_without_question_facts():
     payload = build_generation_payload(
         plan={
             "date": "2026-06-13",
@@ -30,18 +30,35 @@ def test_build_generation_payload_contains_plan_context_and_question_facts():
 
     assert payload["plan"]["main_theme"] == "データベース: 集計・結合"
     assert payload["personal_context"]["weak_points"] == "- SQL\n- transaction"
-    assert payload["questions"][0]["source_url"] == "https://example.test/q1"
-    assert payload["questions"][0]["answer"] == "ア"
-    assert payload["generation_rules"]["openai_must_not_change_question_facts"] is True
+    assert "questions" not in payload
+    assert payload["generation_rules"]["openai_must_not_generate_question_content"] is True
     assert payload["generation_rules"]["output_must_copy_plan_fields_exactly"] == [
         "date",
         "main_theme",
         "reading_assignment",
         "practice_focus",
     ]
-    assert payload["generation_rules"]["page_structure_language"] == "English"
-    assert payload["generation_rules"]["question_explanation_language"] == "Simplified Chinese"
+    assert payload["generation_rules"]["page_structure_language"] == "Japanese"
+    assert payload["generation_rules"]["generated_learning_content_language"] == "Japanese"
+    assert payload["generation_rules"]["japanese_content_fields"] == [
+        "goals",
+        "time_table.task",
+        "terms.meaning",
+        "terms.exam_note",
+        "terms.trap",
+        "knowledge_points.title",
+        "knowledge_points.body",
+        "tomorrow_suggestion.theme",
+    ]
     assert payload["generation_rules"]["page_format_reference"] == "FE Daily Study Task markdown"
+    assert payload["generation_rules"]["minimum_key_terms"] == 10
+    assert payload["generation_rules"]["key_terms_table_fields"] == [
+        "term",
+        "meaning",
+        "exam_note",
+        "trap",
+    ]
+    assert payload["generation_rules"]["key_terms_must_have_unique_exam_notes_and_traps"] is True
 
 
 @pytest.mark.parametrize(
@@ -64,7 +81,7 @@ def test_build_generation_payload_rejects_secret_markers(secret_text):
         )
 
 
-def test_build_generation_payload_preserves_runtime_question_fields():
+def test_build_generation_payload_does_not_include_runtime_question_fields():
     detail = question_detail()
 
     payload = build_generation_payload(
@@ -75,13 +92,9 @@ def test_build_generation_payload_preserves_runtime_question_fields():
         questions=[detail],
     )
 
-    assert payload["questions"] == [
-        {
-            "source_url": detail["url"],
-            "question_text": detail["questionText"],
-            "choices": detail["choices"],
-            "answer": detail["answer"],
-            "explanation": detail["explanation"],
-            "images": detail["images"],
-        }
-    ]
+    rendered = repr(payload)
+    assert "questions" not in payload
+    assert detail["url"] not in rendered
+    assert detail["questionText"] not in rendered
+    assert detail["answer"] not in rendered
+    assert detail["explanation"] not in rendered

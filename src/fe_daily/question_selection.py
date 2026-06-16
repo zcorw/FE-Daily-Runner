@@ -22,6 +22,12 @@ CANONICAL_TOPIC_TAG_ALIASES = (
     (("lock", "recovery", "rollback", "commit"), ("transaction",)),
     (("sql",), ("sql",)),
     (("security",), ("security",)),
+    (("waf", "ids", "dmz"), ("security",)),
+    (("backup", "availability"), ("availability",)),
+)
+SEARCH_KEYWORD_ALIASES = (
+    (("waf", "ids", "dmz", "security"), "security"),
+    (("backup", "availability"), "availability"),
 )
 
 
@@ -57,8 +63,9 @@ def build_candidate_search_payloads(targets: list[FocusTarget]) -> list[dict[str
             raise ValueError("focus target count must be positive")
         if not target.label.strip():
             raise ValueError("focus target label must not be blank")
+        keywords = _keywords_for_label(target.label)
         payload = {
-            "keywords": [target.label],
+            "keywords": keywords,
             "examPart": SUBJECT_A_EXAM_PART,
             "limit": max(target.count * 5, 10),
         }
@@ -67,6 +74,14 @@ def build_candidate_search_payloads(targets: list[FocusTarget]) -> list[dict[str
             payload["topicTags"] = topic_tags
         payloads.append(payload)
     return payloads
+
+
+def _keywords_for_label(label: str) -> list[str]:
+    normalized = label.casefold()
+    for needles, keyword in SEARCH_KEYWORD_ALIASES:
+        if any(needle in normalized for needle in needles):
+            return [keyword]
+    return [label]
 
 
 def _topic_tags_for_label(label: str) -> list[str]:

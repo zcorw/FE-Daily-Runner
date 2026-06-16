@@ -7,6 +7,11 @@ import pytest
 from fe_daily.openai_generator import OpenAIGenerationError, OpenAIGenerator
 
 
+@pytest.fixture(autouse=True)
+def isolate_token_usage_logs(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+
+
 def valid_content_payload():
     return {
         "date": "2026-06-13",
@@ -31,18 +36,19 @@ def valid_content_payload():
 
 
 class FakeResponses:
-    def __init__(self, response_payload):
+    def __init__(self, response_payload, *, usage=None):
         self.response_payload = response_payload
+        self.usage = usage
         self.calls = []
 
     def create(self, **kwargs):
         self.calls.append(kwargs)
-        return SimpleNamespace(output_text=json.dumps(self.response_payload))
+        return SimpleNamespace(output_text=json.dumps(self.response_payload), usage=self.usage)
 
 
 class FakeOpenAIClient:
-    def __init__(self, response_payload):
-        self.responses = FakeResponses(response_payload)
+    def __init__(self, response_payload, *, usage=None):
+        self.responses = FakeResponses(response_payload, usage=usage)
 
 
 class SequenceResponses:
@@ -94,6 +100,49 @@ def test_openai_generator_parses_structured_json_output():
 
     assert content.date.isoformat() == "2026-06-13"
     assert content.questions[0].answer == "ア"
+
+
+def test_openai_generator_writes_token_usage_jsonl_without_prompt_text(tmp_path):
+    usage = SimpleNamespace(
+        input_tokens=1200,
+        output_tokens=600,
+        total_tokens=1800,
+        output_tokens_details=SimpleNamespace(reasoning_tokens=90),
+    )
+    settings = load_settings(
+        _env_file=None,
+        openai_model="gpt-test",
+        openai_reasoning_effort="medium",
+        openai_text_verbosity="low",
+        openai_token_usage_log_path=tmp_path / "logs" / "openai_token_usage.jsonl",
+    )
+    client = FakeOpenAIClient(valid_content_payload(), usage=usage)
+    generator = OpenAIGenerator(settings=settings, client=client)
+
+    generator.generate(
+        {
+            "plan": {"date": "2026-06-13", "main_theme": "SQL"},
+            "questions": [{"source_url": "https://example.test/q1"}],
+            "personal_context": {"weak_points": "secret personal note"},
+        }
+    )
+
+    log_lines = settings.openai_token_usage_log_path.read_text(encoding="utf-8").splitlines()
+    assert len(log_lines) == 1
+    record = json.loads(log_lines[0])
+    assert record["plan_date"] == "2026-06-13"
+    assert record["model"] == "gpt-test"
+    assert record["reasoning_effort"] == "medium"
+    assert record["text_verbosity"] == "low"
+    assert record["usage"]["input_tokens"] == 1200
+    assert record["usage"]["output_tokens"] == 600
+    assert record["usage"]["reasoning_tokens"] == 90
+    assert record["usage"]["total_tokens"] == 1800
+    assert record["request_shape"]["question_count"] == 1
+    assert record["request_shape"]["payload_json_chars"] > 0
+    assert record["request_shape"]["schema_json_chars"] > 0
+    assert "secret personal note" not in log_lines[0]
+    assert "Question text" not in log_lines[0]
 
 
 def test_openai_generator_retries_once_with_validation_error_feedback():

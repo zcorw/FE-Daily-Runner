@@ -17,8 +17,8 @@ def runtime_detail():
         "questionText": "Question text",
         "choices": {"ア": "A", "イ": "B"},
         "answer": "ア",
-        "explanation": "中文说明",
-        "distractor_explanations": {"イ": "这个选项不符合题干条件"},
+        "explanation": "これは日本語の解説です。",
+        "distractor_explanations": {"イ": "この選択肢は題意に合わないため誤りです。"},
         "images": [{"publicPath": "/assets/fe-siken/r7/q1.png"}],
     }
 
@@ -29,33 +29,40 @@ def generated_content(**question_overrides):
         "question_text": "Question text",
         "choices": {"ア": "A", "イ": "B"},
         "answer": "ア",
-        "explanation": "中文说明",
-        "distractor_explanations": {"イ": "这个选项不符合题干条件"},
+        "explanation": "これは日本語の解説です。",
+        "distractor_explanations": {"イ": "この選択肢は題意に合わないため誤りです。"},
         "images": [{"publicPath": "/assets/fe-siken/r7/q1.png"}],
     }
     question.update(question_overrides)
     return DailyLearningContent.model_validate(
         {
             "date": "2026-06-13",
-            "title": "Daily FE Study",
+            "title": "FE Daily 学習タスク",
             "main_theme": "SQL",
             "plan_reference": {
                 "date": "2026-06-13",
                 "reading_assignment": "Ch.4.3 SQL p.129-133",
                 "practice_focus": "SQL 10",
             },
-            "time_table": [{"minutes": 10}, {"minutes": 20}, {"minutes": 20}, {"minutes": 10}],
+            "goals": ["科目Aの問題を確認する。"],
+            "time_table": [
+                {"minutes": 10, "task": "読解する"},
+                {"minutes": 20, "task": "重要語を整理する"},
+                {"minutes": 20, "task": "問題を解く"},
+                {"minutes": 10, "task": "誤答を復習する"},
+            ],
             "terms": [
                 {
                     "term": f"term-{index}",
-                    "meaning": "meaning",
-                    "exam_note": f"exam note {index}",
-                    "trap": f"trap {index}",
+                    "meaning": "意味を確認する。",
+                    "exam_note": f"試験での注意点 {index}",
+                    "trap": f"混同しやすい点 {index}",
                 }
                 for index in range(10)
             ],
             "questions": [question],
-            "tomorrow_suggestion": {"theme": "Transaction"},
+            "knowledge_points": [{"title": "SQLの要点", "body": "集計条件を確認する。"}],
+            "tomorrow_suggestion": {"theme": "トランザクション"},
         }
     )
 
@@ -66,44 +73,44 @@ def generated_page_content() -> DailyLearningContent:
         "question_text": "Question text",
         "choices": {"A": "Alpha", "B": "Beta"},
         "answer": "A",
-        "explanation": "中文说明",
-        "distractor_explanations": {"B": "这个选项不符合题干条件"},
+        "explanation": "これは日本語の解説です。",
+        "distractor_explanations": {"B": "この選択肢は題意に合わないため誤りです。"},
         "images": [{"publicPath": "/assets/fe-siken/r7/q1.png"}],
     }
     return DailyLearningContent.model_validate(
         {
             "date": "2026-06-13",
-            "title": "Daily FE Study",
+            "title": "FE Daily 学習タスク",
             "main_theme": "SQL",
             "plan_reference": {
                 "date": "2026-06-13",
                 "reading_assignment": "Ch.4.3 SQL p.129-133",
                 "practice_focus": "SQL 10",
             },
-            "goals": ["Practice"],
-            "time_table": [{"minutes": 60, "task": "Practice"}],
+            "goals": ["科目Aの問題を確認する。"],
+            "time_table": [{"minutes": 60, "task": "問題を解いて復習する"}],
             "terms": [
                 {
                     "term": f"term-{index}",
-                    "meaning": "meaning",
-                    "exam_note": f"exam note {index}",
-                    "trap": f"trap {index}",
+                    "meaning": "意味を確認する。",
+                    "exam_note": f"試験での注意点 {index}",
+                    "trap": f"混同しやすい点 {index}",
                 }
                 for index in range(10)
             ],
-            "knowledge_points": [{"title": "SQL", "body": "Group rows."}],
+            "knowledge_points": [{"title": "SQLの要点", "body": "集計条件を確認する。"}],
             "questions": [
                 {
                     **base_question,
                     "source_url": f"https://example.test/q{index}",
                     "question_text": f"Question {index}",
-                    "explanation": f"中文说明 {index}",
+                    "explanation": f"これは日本語の解説です {index}",
                     "images": [{"publicPath": f"/assets/fe-siken/r7/q{index}.png"}],
                 }
                 for index in range(1, 11)
             ],
             "review_table_template": [{"question_no": index} for index in range(1, 11)],
-            "tomorrow_suggestion": {"theme": "Transaction"},
+            "tomorrow_suggestion": {"theme": "トランザクション"},
         }
     )
 
@@ -118,12 +125,12 @@ def test_validate_question_facts_accepts_matching_runtime_details():
 
 def test_validate_question_facts_accepts_generated_teaching_explanation():
     validate_question_facts(
-        generated_content(explanation="这是一段中文讲解。"),
+        generated_content(explanation="これは日本語の詳しい解説です。"),
         [runtime_detail()],
     )
 
 
-def test_validate_question_facts_rejects_non_chinese_generated_explanation():
+def test_validate_question_facts_rejects_non_japanese_generated_explanation():
     with pytest.raises(ContentValidationError) as exc_info:
         validate_question_facts(generated_content(explanation="Generated teaching explanation"), [runtime_detail()])
 
@@ -165,7 +172,7 @@ def test_validate_question_facts_rejects_repeated_distractor_explanations():
             generated_content(
                 choices={"A": "A", "B": "B", "C": "C"},
                 answer="A",
-                distractor_explanations={"B": "同一个错误说明", "C": "同一个错误说明"},
+                distractor_explanations={"B": "同じ誤答理由です。", "C": "同じ誤答理由です。"},
             ),
             [
                 {
@@ -240,6 +247,16 @@ def test_validate_learning_content_quality_rejects_repeated_term_exam_notes_or_t
     assert "exam_note" in str(exc_info.value)
 
 
+def test_validate_learning_content_quality_rejects_non_japanese_generated_learning_text():
+    content = generated_content()
+    content.terms[0]["meaning"] = "English meaning"
+
+    with pytest.raises(ContentValidationError) as exc_info:
+        validate_learning_content_quality(content, expected_plan())
+
+    assert "Japanese" in str(exc_info.value)
+
+
 def test_validate_learning_content_quality_requires_approximately_60_minutes():
     content = generated_content()
     content.time_table = [{"minutes": 20}]
@@ -287,8 +304,8 @@ def test_validate_daily_html_accepts_matching_page():
             lambda html: html.replace("Ch.4.3 SQL p.129-133", "Ch.5 Network p.1-10"),
         ),
         ("source_url", lambda html: html.replace("https://example.test/q1", "https://example.test/changed")),
-        ("answer", lambda html: html.replace("<strong>Correct answer</strong>: A", "<strong>Correct answer</strong>: B", 1)),
-        ("explanation", lambda html: html.replace("中文说明 1", "Changed explanation")),
+        ("answer", lambda html: html.replace("<strong>正答</strong>: A", "<strong>正答</strong>: B", 1)),
+        ("explanation", lambda html: html.replace("これは日本語の解説です 1", "Changed explanation")),
         (
             "image",
             lambda html: html.replace("/assets/fe-siken/r7/q1.png", "question-bank-runtime/r7/q1.png"),

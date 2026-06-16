@@ -152,7 +152,45 @@ class QuestionBankClient:
         choices = normalized.get("choices")
         if isinstance(choices, list):
             normalized = {**normalized, "choices": cls._normalize_choices(choices)}
+        normalized = cls._normalize_learning_explanation_fields(normalized)
         return normalized
+
+    @classmethod
+    def _normalize_learning_explanation_fields(cls, question: dict[str, Any]) -> dict[str, Any]:
+        learning = question.get("learningExplanation")
+        if not isinstance(learning, dict):
+            learning = {}
+
+        field_map = {
+            "explanation": ("explanationJa",),
+            "distractor_explanations": ("distractorExplanationsJa",),
+            "knowledge_point": ("knowledgePointJa",),
+            "exam_point": ("examPointJa",),
+            "common_trap": ("commonTrapJa",),
+        }
+        normalized = dict(question)
+        for target, source_names in field_map.items():
+            if target in normalized:
+                continue
+            value = cls._first_present_value(normalized, learning, source_names)
+            if value is not None:
+                normalized[target] = value
+        return normalized
+
+    @staticmethod
+    def _first_present_value(
+        primary: dict[str, Any],
+        secondary: dict[str, Any],
+        source_names: tuple[str, ...],
+    ) -> Any:
+        for source in source_names:
+            value = primary.get(source)
+            if value is not None:
+                return value
+            value = secondary.get(source)
+            if value is not None:
+                return value
+        return None
 
     @staticmethod
     def _normalize_choices(choices: list[Any]) -> dict[str, str]:

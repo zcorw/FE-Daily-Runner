@@ -26,6 +26,8 @@ def valid_detail(url="https://example.test/q1"):
         "choices": {"ア": "A", "イ": "B", "ウ": "C", "エ": "D"},
         "answer": "ア",
         "explanation": "Explanation",
+        "distractor_explanations": {"イ": "イは誤りです。"},
+        "knowledge_point": "題庫の知識点です。",
         "images": [],
     }
 
@@ -53,6 +55,7 @@ def test_load_required_details_requests_answer_and_explanation():
         ("choices", {}),
         ("answer", ""),
         ("explanation", ""),
+        ("distractor_explanations", {}),
     ],
 )
 def test_load_required_details_rejects_missing_required_fields(field, value):
