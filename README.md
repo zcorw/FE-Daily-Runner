@@ -58,6 +58,15 @@ references/PROJECT_REQUIREMENTS.md
 
 Use other files only as supporting context.
 
+## Project Documentation
+
+Current operation and integration docs:
+
+- [Project overview](docs/project-overview.md) - project purpose, boundaries, workflow, output policy.
+- [Question Bank Runtime API integration](docs/question-bank-runtime-api.md) - Runtime endpoints, request/response shapes, image boundary, contract tests.
+- [Deployment and operations](docs/deployment.md) - local and Docker setup, environment variables, run commands, scheduling.
+- [Release verification checklist](docs/verification.md) - tests and smoke checks before publishing.
+
 ## Runtime Boundary
 
 This application is a consumer of FE Question Bank Service Runtime API. It:
