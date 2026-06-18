@@ -60,6 +60,10 @@ def generated_content(**question_overrides):
                 }
                 for index in range(10)
             ],
+            "daily_explanation": [
+                {"title": f"今日の要点 {index}", "body": "試験で問われる判断基準を整理します。"}
+                for index in range(1, 5)
+            ],
             "questions": [question],
             "knowledge_points": [{"title": "SQLの要点", "body": "集計条件を確認する。"}],
             "tomorrow_suggestion": {"theme": "トランザクション"},
@@ -97,6 +101,10 @@ def generated_page_content() -> DailyLearningContent:
                     "trap": f"混同しやすい点 {index}",
                 }
                 for index in range(10)
+            ],
+            "daily_explanation": [
+                {"title": f"今日の要点 {index}", "body": "試験で問われる判断基準を整理します。"}
+                for index in range(1, 5)
             ],
             "knowledge_points": [{"title": "SQLの要点", "body": "集計条件を確認する。"}],
             "questions": [

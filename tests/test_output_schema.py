@@ -38,6 +38,12 @@ def valid_content_payload():
                 "trap": "WHEREとHAVINGの役割を混同しない。",
             }
         ],
+        "daily_explanation": [
+            {"title": "集計の要点", "body": "集計関数とグループ化の関係を確認する。"},
+            {"title": "条件の違い", "body": "WHEREとHAVINGの適用順序を整理する。"},
+            {"title": "結合の注意", "body": "表の対応関係と主キーを確認する。"},
+            {"title": "誤答対策", "body": "似た構文の選択肢を比較して判断する。"},
+        ],
         "knowledge_points": [{"title": "SQL", "body": "Use grouping carefully."}],
         "questions": [valid_question()],
         "review_table_template": [{"question_no": 1}],

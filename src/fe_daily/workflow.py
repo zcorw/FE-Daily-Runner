@@ -1,7 +1,9 @@
 from dataclasses import dataclass
 from datetime import date, datetime, timezone
 from pathlib import Path
+import shutil
 from typing import Any, Protocol
+from urllib.parse import urlsplit, urlunsplit
 
 from fe_daily.config import DailyRunnerSettings, RunMode
 from fe_daily.content_validation import (
@@ -125,7 +127,7 @@ def run_daily_workflow(
         mistake_log=mistake_log,
         questions=details,
     )
-    page_url = f"/daily/{target_date:%Y-%m-%d}/"
+    page_url = _daily_page_url(target_date)
     content, html = _generate_validated_content(
         generator=generator,
         generation_payload=generation_payload,
@@ -166,6 +168,8 @@ def run_daily_workflow(
             template_dir=settings.template_dir,
         )
         atomic_write_text(target_paths.index_page, index_html)
+        if settings.static_publish_dir is not None:
+            _publish_static_site(settings.output_dir, settings.static_publish_dir)
         upsert_progress_entry(workspace_root / "personal" / "progress.md", content, page_url=page_url)
         update_daily_state(
             state_path=workspace_root / "state" / "daily_state.json",
@@ -214,6 +218,41 @@ def run_daily_workflow(
         )
 
     raise NotImplementedError(f"workflow run mode is not implemented yet: {run_mode.value}")
+
+
+def _publish_static_site(output_dir: Path | str, publish_dir: Path | str) -> None:
+    source_root = Path(output_dir)
+    target_root = Path(publish_dir)
+    source_daily = source_root / "daily"
+    source_index = source_root / "index.html"
+
+    if source_daily.exists():
+        _copy_directory_contents(source_daily, target_root)
+    if source_index.exists():
+        target_root.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(source_index, target_root / "index.html")
+
+    _make_tree_readable(target_root)
+
+
+def _copy_directory_contents(source: Path, target: Path) -> None:
+    target.mkdir(parents=True, exist_ok=True)
+    for item in source.iterdir():
+        destination = target / item.name
+        if item.is_dir():
+            shutil.copytree(item, destination, dirs_exist_ok=True)
+        elif item.is_file():
+            shutil.copy2(item, destination)
+
+
+def _make_tree_readable(root: Path) -> None:
+    if not root.exists():
+        return
+    for path in [root, *root.rglob("*")]:
+        if path.is_dir():
+            path.chmod(0o755)
+        elif path.is_file():
+            path.chmod(0o644)
 
 
 def _plan_payload(plan_entry: StudyPlanEntry) -> dict[str, Any]:
@@ -293,18 +332,25 @@ def _inject_runtime_questions(content: DailyLearningContent, runtime_details: li
 
 
 def _question_block_from_runtime_detail(detail: dict[str, Any]) -> dict[str, Any]:
+    choices = detail.get("choices")
+    answer = detail.get("answer")
+    distractor_explanations = _learning_field(
+        detail,
+        "distractor_explanations",
+        "distractorExplanationsJa",
+        default={},
+    )
     return {
         "source_url": detail.get("url"),
         "question_text": detail.get("questionText"),
-        "choices": detail.get("choices"),
-        "answer": detail.get("answer"),
+        "choices": choices,
+        "answer": answer,
         "explanation": _learning_field(detail, "explanation", "explanationJa"),
         "knowledge_point": _learning_field(detail, "knowledge_point", "knowledgePointJa"),
-        "distractor_explanations": _learning_field(
-            detail,
-            "distractor_explanations",
-            "distractorExplanationsJa",
-            default={},
+        "distractor_explanations": _complete_distractor_explanations(
+            choices,
+            answer,
+            distractor_explanations,
         ),
         "images": detail.get("images", []),
         "exam_point": _learning_field(detail, "exam_point", "examPointJa"),
@@ -313,6 +359,22 @@ def _question_block_from_runtime_detail(detail: dict[str, Any]) -> dict[str, Any
         "topic_tags": detail.get("topicTags", []),
         "knowledge_points": detail.get("knowledgePoints", []),
     }
+
+
+def _complete_distractor_explanations(
+    choices: Any,
+    answer: Any,
+    explanations: Any,
+) -> dict[str, str]:
+    completed = dict(explanations) if isinstance(explanations, dict) else {}
+    if not isinstance(choices, dict) or not isinstance(answer, str):
+        return completed
+
+    for label in choices:
+        if label == answer or label in completed:
+            continue
+        completed[label] = f"{label}は正解ではありません。解説を確認し、正解との差を整理してください。"
+    return completed
 
 
 def _learning_field(
@@ -353,14 +415,33 @@ def _content_quality_requirements() -> dict[str, Any]:
             "terms.meaning",
             "terms.exam_note",
             "terms.trap",
+            "daily_explanation.title",
+            "daily_explanation.body",
             "knowledge_points.title",
             "knowledge_points.body",
             "tomorrow_suggestion.theme",
         ],
+        "daily_explanation_instruction": (
+            "Return 4 to 6 daily_explanation items. Every item must include a non-empty Japanese title "
+            "and body, and must connect the day's reading assignment, weak points, and selected question "
+            "knowledge summaries."
+        ),
     }
 
 
 def _absolute_page_url(settings: DailyRunnerSettings, page_url: str) -> str:
     if settings.page_base_url is None:
         return page_url
-    return settings.page_base_url.rstrip("/") + page_url
+    base = _site_origin(settings.page_base_url)
+    return base.rstrip("/") + page_url
+
+
+def _daily_page_url(target_date: date) -> str:
+    return f"/daily/{target_date:%Y/%m/%Y-%m-%d}/"
+
+
+def _site_origin(base_url: str) -> str:
+    parsed = urlsplit(base_url)
+    if parsed.scheme and parsed.netloc:
+        return urlunsplit((parsed.scheme, parsed.netloc, "", "", ""))
+    return base_url

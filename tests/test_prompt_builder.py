@@ -10,6 +10,9 @@ def question_detail(url="https://example.test/q1"):
         "choices": {"ア": "A", "イ": "B", "ウ": "C", "エ": "D"},
         "answer": "ア",
         "explanation": "Explanation",
+        "knowledge_point": "SQL集計",
+        "exam_point": "GROUP BYとHAVINGの違いを確認する。",
+        "common_trap": "WHEREとHAVINGを混同する。",
         "images": [{"publicPath": "/assets/fe-siken/r7/q1.png"}],
     }
 
@@ -31,6 +34,18 @@ def test_build_generation_payload_contains_plan_context_without_question_facts()
     assert payload["plan"]["main_theme"] == "データベース: 集計・結合"
     assert payload["personal_context"]["weak_points"] == "- SQL\n- transaction"
     assert "questions" not in payload
+    assert payload["daily_explanation_context"]["book_section_context"]["reading_assignment"] == (
+        "Ch.4.3 SQL集計/結合 p.129-133"
+    )
+    assert "SQL集計" in payload["daily_explanation_context"]["concept_focus"]
+    assert payload["daily_explanation_context"]["selected_question_summary"] == [
+        {
+            "question_no": "1",
+            "knowledge_point": "SQL集計",
+            "exam_point": "GROUP BYとHAVINGの違いを確認する。",
+            "common_trap": "WHEREとHAVINGを混同する。",
+        }
+    ]
     assert payload["generation_rules"]["openai_must_not_generate_question_content"] is True
     assert payload["generation_rules"]["output_must_copy_plan_fields_exactly"] == [
         "date",
@@ -46,6 +61,8 @@ def test_build_generation_payload_contains_plan_context_without_question_facts()
         "terms.meaning",
         "terms.exam_note",
         "terms.trap",
+        "daily_explanation.title",
+        "daily_explanation.body",
         "knowledge_points.title",
         "knowledge_points.body",
         "tomorrow_suggestion.theme",
@@ -94,6 +111,7 @@ def test_build_generation_payload_does_not_include_runtime_question_fields():
 
     rendered = repr(payload)
     assert "questions" not in payload
+    assert "selected_question_summary" in rendered
     assert detail["url"] not in rendered
     assert detail["questionText"] not in rendered
     assert detail["answer"] not in rendered

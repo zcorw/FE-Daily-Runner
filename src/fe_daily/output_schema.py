@@ -109,6 +109,21 @@ KnowledgePoints = Annotated[
         }
     ),
 ]
+DailyExplanation = Annotated[
+    list[Any],
+    WithJsonSchema(
+        {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "title": {"type": "string"},
+                    "body": {"type": "string"},
+                },
+            },
+        }
+    ),
+]
 ReviewTable = Annotated[
     list[Any],
     WithJsonSchema(
@@ -202,6 +217,7 @@ class DailyLearningContent(BaseModel):
     goals: Goals = Field(default_factory=list)
     time_table: TimeTable = Field(default_factory=list)
     terms: Terms = Field(default_factory=list)
+    daily_explanation: DailyExplanation = Field(default_factory=list)
     knowledge_points: KnowledgePoints = Field(default_factory=list)
     questions: list[QuestionLearningBlock] = Field(default_factory=list)
     review_table_template: ReviewTable = Field(default_factory=list)

@@ -7,7 +7,7 @@ import pytest
 from fe_daily.config import ExistingPagePolicy, RunMode, load_settings
 from fe_daily.output_schema import DailyLearningContent
 from fe_daily.paths import daily_page_path
-from fe_daily.workflow import run_daily_workflow
+from fe_daily.workflow import _question_block_from_runtime_detail, run_daily_workflow
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -93,6 +93,10 @@ class FakeGenerator:
                     }
                     for index in range(10)
                 ],
+                "daily_explanation": [
+                    {"title": f"今日の要点 {index}", "body": "試験で問われる判断基準を整理します。"}
+                    for index in range(1, 5)
+                ],
                 "knowledge_points": [{"title": "SQLの要点", "body": "集計条件を確認する。"}],
                 "questions": [],
                 "review_table_template": [{"question_no": index} for index in range(1, 11)],
@@ -129,9 +133,11 @@ class PlanDriftGenerator(FakeGenerator):
 class FakeNotifier:
     def __init__(self) -> None:
         self.call_count = 0
+        self.messages: list[str] = []
 
     def send_html_message(self, html: str) -> object:
         self.call_count += 1
+        self.messages.append(html)
         return type("SendResult", (), {"status": "sent"})()
 
 
@@ -188,6 +194,25 @@ def write_plan(path: Path) -> None:
     )
 
 
+def test_question_block_generates_fallback_distractor_explanations_when_runtime_omits_them():
+    block = _question_block_from_runtime_detail(
+        {
+            "url": "https://example.test/q1",
+            "questionText": "Question",
+            "choices": {"ア": "alpha", "イ": "beta", "ウ": "gamma", "エ": "delta"},
+            "answer": "ア",
+            "explanation": "これは題庫の解説です。",
+            "images": [],
+        }
+    )
+
+    assert block["distractor_explanations"] == {
+        "イ": "イは正解ではありません。解説を確認し、正解との差を整理してください。",
+        "ウ": "ウは正解ではありません。解説を確認し、正解との差を整理してください。",
+        "エ": "エは正解ではありません。解説を確認し、正解との差を整理してください。",
+    }
+
+
 def test_run_daily_workflow_skip_policy_does_not_call_openai_for_existing_page(tmp_path):
     plan_path = tmp_path / "june-study-plan.md"
     write_plan(plan_path)
@@ -217,6 +242,37 @@ def test_run_daily_workflow_skip_policy_does_not_call_openai_for_existing_page(t
     assert result.status == "skipped"
     assert generator.call_count == 0
     assert target.read_text(encoding="utf-8") == "existing"
+
+
+def test_run_daily_workflow_write_publishes_static_site_when_configured(tmp_path):
+    plan_path = tmp_path / "june-study-plan.md"
+    write_plan(plan_path)
+    publish_dir = tmp_path / "published-site"
+    settings = load_settings(
+        _env_file=None,
+        output_dir=tmp_path / "site",
+        template_dir=ROOT / "templates",
+        static_publish_dir=publish_dir,
+    )
+
+    result = run_daily_workflow(
+        settings=settings,
+        target_date=date(2026, 6, 13),
+        run_mode=RunMode.WRITE,
+        plan_path=plan_path,
+        weak_points="- SQL",
+        mistake_log="- GROUP BY",
+        recent_progress="- DB",
+        question_client=FakeQuestionClient(),
+        generator=FakeGenerator(),
+    )
+
+    assert result.status == "success"
+    published_page = publish_dir / "2026" / "06" / "2026-06-13" / "index.html"
+    published_index = publish_dir / "index.html"
+    assert published_page.exists()
+    assert published_index.exists()
+    assert "これは題庫の解説です 1" in published_page.read_text(encoding="utf-8")
 
 
 def test_run_daily_workflow_restores_plan_fields_from_source(tmp_path):
@@ -398,6 +454,39 @@ def test_run_daily_workflow_notify_records_final_notification_status(tmp_path):
     log_text = (tmp_path / "logs" / "daily_publish" / "2026-06-13.md").read_text(encoding="utf-8")
     assert result.notification_status == "sent"
     assert "notification_status: sent" in log_text
+
+
+def test_run_daily_workflow_notify_uses_published_nested_page_url(tmp_path):
+    plan_path = tmp_path / "june-study-plan.md"
+    write_plan(plan_path)
+    settings = load_settings(
+        _env_file=None,
+        output_dir=tmp_path / "site",
+        template_dir=ROOT / "templates",
+        existing_page_policy=ExistingPagePolicy.OVERWRITE,
+        page_base_url="https://example.test/daily",
+        telegram_bot_token="telegram-token",
+        telegram_chat_id="123",
+    )
+    notifier = FakeNotifier()
+
+    result = run_daily_workflow(
+        settings=settings,
+        target_date=date(2026, 6, 13),
+        run_mode=RunMode.NOTIFY,
+        plan_path=plan_path,
+        weak_points="- SQL",
+        mistake_log="- GROUP BY",
+        recent_progress="- DB",
+        question_client=FakeQuestionClient(),
+        generator=FakeGenerator(),
+        telegram_notifier=notifier,
+    )
+
+    assert result.notification_status == "sent"
+    assert notifier.call_count == 1
+    assert "https://example.test/daily/2026/06/2026-06-13/" in notifier.messages[0]
+    assert "https://example.test/daily/daily/" not in notifier.messages[0]
 
 
 def test_run_daily_workflow_notify_does_not_send_when_validation_fails(tmp_path):

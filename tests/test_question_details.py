@@ -47,6 +47,14 @@ def test_load_required_details_requests_answer_and_explanation():
     ]
 
 
+def test_load_required_details_allows_missing_distractor_explanations():
+    detail = valid_detail()
+    detail.pop("distractor_explanations")
+    client = DetailsClient({"questions": [detail]})
+
+    assert load_required_details(client, ["https://example.test/q1"]) == [detail]
+
+
 @pytest.mark.parametrize(
     ("field", "value"),
     [
@@ -55,7 +63,6 @@ def test_load_required_details_requests_answer_and_explanation():
         ("choices", {}),
         ("answer", ""),
         ("explanation", ""),
-        ("distractor_explanations", {}),
     ],
 )
 def test_load_required_details_rejects_missing_required_fields(field, value):

@@ -27,6 +27,7 @@ def test_load_settings_uses_safe_defaults(tmp_path, monkeypatch):
     assert settings.existing_page_policy is ExistingPagePolicy.FAIL
     assert settings.asset_proxy_base_path == "/assets/fe-siken"
     assert settings.output_dir == tmp_path / "site"
+    assert settings.static_publish_dir is None
     assert settings.template_dir == tmp_path / "templates"
     assert settings.markdown_compat_enabled is False
     assert settings.markdown_output_dir == Path("docs")
@@ -45,6 +46,7 @@ def test_load_settings_reads_env_file(tmp_path):
                 "RUN_MODE=write",
                 "EXISTING_PAGE_POLICY=overwrite",
                 "OPENAI_API_KEY=sk-test-secret",
+                "STATIC_PUBLISH_DIR=/app/published-site",
                 "STUDY_PLAN_PATH=custom/study.md",
                 "WEAK_POINTS_PATH=custom/weak.md",
                 "MISTAKE_LOG_PATH=custom/mistakes.md",
@@ -61,6 +63,7 @@ def test_load_settings_reads_env_file(tmp_path):
     assert settings.existing_page_policy is ExistingPagePolicy.OVERWRITE
     assert settings.openai_api_key is not None
     assert settings.openai_api_key.get_secret_value() == "sk-test-secret"
+    assert settings.static_publish_dir == Path("/app/published-site")
     assert settings.study_plan_path == Path("custom/study.md")
     assert settings.weak_points_path == Path("custom/weak.md")
     assert settings.mistake_log_path == Path("custom/mistakes.md")

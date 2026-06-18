@@ -67,6 +67,10 @@ class FakeGenerator:
                     }
                     for index in range(10)
                 ],
+                "daily_explanation": [
+                    {"title": f"今日の要点 {index}", "body": "試験で問われる判断基準を整理します。"}
+                    for index in range(1, 5)
+                ],
                 "knowledge_points": [{"title": "SQLの要点", "body": "集計条件を確認する。"}],
                 "questions": [],
                 "review_table_template": [{"question_no": index} for index in range(1, 11)],
@@ -200,4 +204,4 @@ def test_e2e_notify_sends_once_after_successful_write(tmp_path):
     assert notifier.call_count == 1
     assert "2026-06-13" in notifier.messages[0]
     assert "データベース: 集計・結合" in notifier.messages[0]
-    assert "https://example.test/daily/2026-06-13/" in notifier.messages[0]
+    assert "https://example.test/daily/2026/06/2026-06-13/" in notifier.messages[0]

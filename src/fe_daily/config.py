@@ -42,6 +42,7 @@ class DailyRunnerSettings(BaseSettings):
     telegram_chat_id: SecretStr | None = None
 
     output_dir: Path = Path("site")
+    static_publish_dir: Path | None = None
     template_dir: Path = Path("templates")
     markdown_compat_enabled: bool = False
     markdown_output_dir: Path = Path("docs")
@@ -70,6 +71,7 @@ class DailyRunnerSettings(BaseSettings):
 
     @field_validator(
         "output_dir",
+        "static_publish_dir",
         "template_dir",
         "markdown_output_dir",
         "openai_token_usage_log_path",

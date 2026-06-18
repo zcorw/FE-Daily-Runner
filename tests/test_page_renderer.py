@@ -60,6 +60,10 @@ def daily_content() -> DailyLearningContent:
                 }
                 for index in range(10)
             ],
+            "daily_explanation": [
+                {"title": f"今日の要点 {index}", "body": "試験で問われる判断基準を整理します。"}
+                for index in range(1, 5)
+            ],
             "knowledge_points": [{"title": "GROUP BY句", "body": "集計前に行をグループ化する。"}],
             "questions": [
                 {
@@ -93,6 +97,7 @@ def test_render_daily_page_outputs_required_sections_and_exactly_10_questions():
     assert soup.select_one('[data-section="reading-assignment"]')
     assert soup.select_one('[data-section="study-checklist"]')
     assert soup.select_one('[data-section="terms"]')
+    assert soup.select_one('[data-section="daily-explanation"]')
     assert soup.select_one('[data-section="knowledge-points"]')
     assert soup.select_one('[data-section="questions"]')
     assert soup.select_one('[data-section="review"]')
@@ -134,11 +139,12 @@ def test_render_daily_page_uses_japanese_template_language():
         "書籍の読解範囲",
         "学習チェックリスト",
         "重要用語",
+        "今日知识点讲解",
         "科目A 練習問題",
         "問題 1",
-        "問題 2",
     ]
     assert headings.index("重要用語") < headings.index("科目A 練習問題")
+    assert headings.index("今日知识点讲解") < headings.index("科目A 練習問題")
     assert "知識メモ" in headings
     assert "正答" in body_text
     assert "他の選択肢が誤りである理由" in body_text

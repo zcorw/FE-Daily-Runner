@@ -73,6 +73,10 @@ class FakeGenerator:
                     }
                     for index in range(10)
                 ],
+                "daily_explanation": [
+                    {"title": f"今日の要点 {index}", "body": "試験で問われる判断基準を整理します。"}
+                    for index in range(1, 5)
+                ],
                 "knowledge_points": [{"title": "SQLの要点", "body": "集計条件を確認する。"}],
                 "questions": [],
                 "review_table_template": [{"question_no": index} for index in range(1, 11)],
@@ -167,7 +171,7 @@ def test_cli_notify_writes_then_sends_one_telegram_message_when_configured(tmp_p
     assert len(notifier.messages) == 1
     assert "2026-06-13" in notifier.messages[0]
     assert "Database aggregation" in notifier.messages[0]
-    assert "https://example.test/daily/2026-06-13/" in notifier.messages[0]
+    assert "https://example.test/daily/2026/06/2026-06-13/" in notifier.messages[0]
 
 
 def test_cli_notify_skips_telegram_when_config_is_missing(tmp_path):

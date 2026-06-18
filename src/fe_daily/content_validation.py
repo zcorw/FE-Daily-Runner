@@ -110,6 +110,7 @@ def validate_learning_content_quality(
     if len(content.terms) < 10:
         raise ContentValidationError(f"terms must contain at least 10 items, got {len(content.terms)}")
     _validate_term_table(content.terms)
+    _validate_daily_explanation(content.daily_explanation)
     _validate_generated_learning_text_is_japanese(content)
 
     total_minutes = 0
@@ -144,6 +145,20 @@ def _validate_term_table(terms: list[Any]) -> None:
         raise ContentValidationError("terms trap values must be specific, not repeated")
 
 
+def _validate_daily_explanation(items: list[Any]) -> None:
+    if len(items) < 4:
+        raise ContentValidationError(f"daily_explanation must contain at least 4 items, got {len(items)}")
+    if len(items) > 6:
+        raise ContentValidationError(f"daily_explanation must contain at most 6 items, got {len(items)}")
+    for index, item in enumerate(items):
+        if not isinstance(item, dict):
+            raise ContentValidationError(f"daily_explanation {index} must be an object")
+        for field in ("title", "body"):
+            value = item.get(field)
+            if not isinstance(value, str) or not value.strip():
+                raise ContentValidationError(f"daily_explanation {index} {field} must not be blank")
+
+
 def _validate_generated_learning_text_is_japanese(content: DailyLearningContent) -> None:
     for index, value in enumerate(content.goals):
         _require_japanese_text(value, f"goals {index}")
@@ -157,6 +172,12 @@ def _validate_generated_learning_text_is_japanese(content: DailyLearningContent)
             continue
         for field in ("meaning", "exam_note", "trap"):
             _require_japanese_text(item.get(field), f"terms {index} {field}")
+
+    for index, item in enumerate(content.daily_explanation):
+        if not isinstance(item, dict):
+            continue
+        for field in ("title", "body"):
+            _require_japanese_text(item.get(field), f"daily_explanation {index} {field}")
 
     for index, item in enumerate(content.knowledge_points):
         if not isinstance(item, dict):

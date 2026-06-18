@@ -9,6 +9,7 @@ services:
       - TZ=Asia/Tokyo
       - QUESTION_BANK_SERVICE_URL=http://question-bank-runtime:8000
       - OUTPUT_DIR=site
+      - STATIC_PUBLISH_DIR=/app/published-site
       - TEMPLATE_DIR=templates
       - RUN_MODE=dry-run
       - EXISTING_PAGE_POLICY=fail
@@ -20,6 +21,7 @@ services:
       - ./state:/app/state
       - ./logs:/app/logs
       - ./personal:/app/personal
+      - ${HOST_STATIC_PUBLISH_DIR:-/var/www/codex-test-daily}:/app/published-site
 
 networks:
   fe-shared:

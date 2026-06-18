@@ -492,6 +492,14 @@
     </div>
   </section>
 
+  <section class="daily-card full-card" data-section="daily-explanation">
+    <h2>今日知识点讲解</h2>
+    <p class="section-subtitle">読解範囲、弱点、選定問題の知識点をつなげて整理する。</p>
+    {% for point in daily_explanation %}
+    <p><strong>{{ point.title }}.</strong> {{ point.body }}</p>
+    {% endfor %}
+  </section>
+
   <section class="daily-card full-card" data-section="questions">
     <h2>科目A 練習問題</h2>
     <p class="section-subtitle">本日のテーマに合わせて Runtime 題庫から選んだ {{ questions|length }} 問</p>
