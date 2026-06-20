@@ -125,6 +125,48 @@ def test_render_daily_page_uses_refined_figma_layout_structure():
     assert soup.select_one(".term-pills")
 
 
+def test_render_daily_page_includes_sticky_quick_navigation():
+    html = render_daily_page(daily_content(), template_dir=ROOT / "templates")
+    soup = BeautifulSoup(html, "html.parser")
+    nav = soup.select_one('nav.quick-nav[aria-label="ページ内ナビゲーション"]')
+
+    assert nav is not None
+    assert soup.select_one(".hero + .quick-nav")
+    assert "position: sticky" in html
+    expected_targets = [
+        "#daily-goals",
+        "#practice-mix",
+        "#time-table",
+        "#reading-assignment",
+        "#study-checklist",
+        "#terms",
+        "#daily-explanation",
+        "#questions",
+        "#knowledge-points",
+        "#review",
+        "#tomorrow",
+    ]
+    assert [link["href"] for link in nav.select("a.quick-nav__link")] == expected_targets
+
+
+def test_render_daily_page_has_mobile_compact_term_cards_without_removing_desktop_table():
+    html = render_daily_page(daily_content(), template_dir=ROOT / "templates")
+    soup = BeautifulSoup(html, "html.parser")
+
+    assert soup.select_one(".terms-table")
+    assert len(soup.select(".terms-table tbody tr")) == 10
+    cards = soup.select(".term-card")
+    assert len(cards) == 10
+    first_card = cards[0]
+    assert first_card.select_one(".term-card__term").get_text(strip=True) == "term-0"
+    assert first_card.select_one('[data-term-field="meaning"] .term-card__body').get_text(strip=True) == "意味を確認する"
+    assert first_card.select_one('[data-term-field="exam-note"] .term-card__body').get_text(strip=True) == "試験での注意点 0"
+    assert first_card.select_one('[data-term-field="trap"] .term-card__body').get_text(strip=True) == "混同しやすい点 0"
+    assert "@media (max-width: 640px)" in html
+    assert ".terms-table-wrap { display: none;" in html
+    assert ".term-card-list { display: grid;" in html
+
+
 def test_render_daily_page_uses_japanese_template_language():
     html = render_daily_page(daily_content(), template_dir=ROOT / "templates")
     soup = BeautifulSoup(html, "html.parser")

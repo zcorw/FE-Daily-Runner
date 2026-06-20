@@ -15,7 +15,56 @@
     grid-template-columns: minmax(0, 1fr) 432px;
     gap: 32px;
     align-items: start;
+    margin-bottom: 16px;
+  }
+
+  .quick-nav {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    gap: 18px;
     margin-bottom: 32px;
+    padding: 14px 24px;
+    border: 1px solid rgba(223, 232, 226, 0.78);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.88);
+    backdrop-filter: blur(10px);
+  }
+
+  .quick-nav__label {
+    flex: 0 0 auto;
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 800;
+  }
+
+  .quick-nav__links {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 10px;
+    min-width: 0;
+  }
+
+  .quick-nav__link {
+    display: inline-flex;
+    align-items: center;
+    min-height: 28px;
+    border-radius: 999px;
+    padding: 5px 10px;
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.2;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+
+  .quick-nav__link:hover,
+  .quick-nav__link:focus-visible {
+    background: var(--green-soft);
+    color: var(--green);
   }
 
   .hero__eyebrow,
@@ -347,6 +396,68 @@
   .terms-table td:nth-child(2) { width: 34%; }
   .terms-table td:nth-child(3) { width: 30%; }
 
+  .term-card-list {
+    display: none;
+  }
+
+  .term-card {
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--card);
+    box-shadow: var(--shadow);
+    padding: 12px;
+  }
+
+  .term-card__header {
+    display: grid;
+    grid-template-columns: 30px minmax(0, 1fr);
+    gap: 10px;
+    align-items: center;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .term-card__number {
+    display: grid;
+    place-items: center;
+    width: 30px;
+    height: 26px;
+    border-radius: 999px;
+    background: var(--green-soft);
+    color: var(--green);
+    font-size: 10px;
+    font-weight: 800;
+  }
+
+  .term-card__term {
+    font-size: 16px;
+    line-height: 1.35;
+    font-weight: 800;
+  }
+
+  .term-card__field {
+    display: grid;
+    grid-template-columns: 42px minmax(0, 1fr);
+    gap: 8px;
+    margin-top: 10px;
+  }
+
+  .term-card__label {
+    font-size: 10px;
+    line-height: 1.6;
+    font-weight: 800;
+  }
+
+  .term-card__field[data-term-field="meaning"] .term-card__label { color: var(--green); }
+  .term-card__field[data-term-field="exam-note"] .term-card__label { color: var(--amber); }
+  .term-card__field[data-term-field="trap"] .term-card__label { color: var(--red); }
+
+  .term-card__body {
+    margin: 0;
+    font-size: 12px;
+    line-height: 1.55;
+  }
+
   .review-table th,
   .review-table td {
     border: 1px solid var(--line);
@@ -363,6 +474,10 @@
     font-size: 13px;
   }
 
+  [id] {
+    scroll-margin-top: 86px;
+  }
+
   @media (max-width: 960px) {
     .daily-shell { padding: 32px 18px 48px; }
     .hero,
@@ -372,6 +487,38 @@
     .hero-stats,
     .time-card-grid { grid-template-columns: 1fr; }
     .question-detail { margin-left: 0; }
+  }
+
+  @media (max-width: 640px) {
+    .quick-nav {
+      gap: 10px;
+      margin-right: -18px;
+      margin-left: -18px;
+      margin-bottom: 24px;
+      padding: 8px 18px;
+      border-right: 0;
+      border-left: 0;
+      border-radius: 0;
+    }
+
+    .quick-nav__links {
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      scrollbar-width: none;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .quick-nav__links::-webkit-scrollbar {
+      display: none;
+    }
+
+    .quick-nav__link {
+      min-height: 28px;
+      padding: 5px 9px;
+    }
+
+    .terms-table-wrap { display: none; }
+    .term-card-list { display: grid; gap: 14px; margin-top: 18px; }
   }
 </style>
 
@@ -394,8 +541,25 @@
     </div>
   </section>
 
+  <nav class="quick-nav" aria-label="ページ内ナビゲーション">
+    <span class="quick-nav__label">ページ内</span>
+    <div class="quick-nav__links">
+      <a class="quick-nav__link" href="#daily-goals">目標</a>
+      <a class="quick-nav__link" href="#practice-mix">演習</a>
+      <a class="quick-nav__link" href="#time-table">時間</a>
+      <a class="quick-nav__link" href="#reading-assignment">読解</a>
+      <a class="quick-nav__link" href="#study-checklist">チェック</a>
+      <a class="quick-nav__link" href="#terms">重要用語</a>
+      <a class="quick-nav__link" href="#daily-explanation">講解</a>
+      <a class="quick-nav__link" href="#questions">問題</a>
+      <a class="quick-nav__link" href="#knowledge-points">メモ</a>
+      <a class="quick-nav__link" href="#review">復習</a>
+      <a class="quick-nav__link" href="#tomorrow">明日</a>
+    </div>
+  </nav>
+
   <div class="overview-grid">
-    <section class="daily-card" data-section="daily-goals">
+    <section id="daily-goals" class="daily-card" data-section="daily-goals">
       <h2>今日の目標</h2>
       <p class="section-subtitle">主題と到達目標</p>
       <ul class="goal-list">
@@ -410,7 +574,7 @@
       </ul>
     </section>
 
-    <section class="daily-card" data-section="practice-mix">
+    <section id="practice-mix" class="daily-card" data-section="practice-mix">
       <h2>演習構成</h2>
       <p class="section-subtitle">題庫検索で使う演習バケット</p>
       <div class="practice-mix">
@@ -429,7 +593,7 @@
     </section>
   </div>
 
-  <section class="daily-card full-card" data-section="time-table">
+  <section id="time-table" class="daily-card full-card" data-section="time-table">
     <h2>時間配分</h2>
     <p class="section-subtitle">60分で進める実行計画</p>
     <div class="time-card-grid">
@@ -443,13 +607,13 @@
     </div>
   </section>
 
-  <section class="daily-card full-card" data-section="reading-assignment">
+  <section id="reading-assignment" class="daily-card full-card" data-section="reading-assignment">
     <h2>書籍の読解範囲</h2>
     <p class="section-subtitle">{{ date }} の学習計画から取得した範囲。章全体には広げない。</p>
     <p><strong>{{ main_theme }}</strong> / 読解範囲 / <code>{{ plan_reference.reading_assignment }}</code></p>
   </section>
 
-  <section class="daily-card full-card" data-section="study-checklist">
+  <section id="study-checklist" class="daily-card full-card" data-section="study-checklist">
     <h2>学習チェックリスト</h2>
     <ul class="goal-list">
       <li><input type="checkbox" disabled> 指定された読解範囲を読み、重要な手順に印を付ける。</li>
@@ -460,7 +624,7 @@
     </ul>
   </section>
 
-  <section class="daily-card full-card" data-section="terms">
+  <section id="terms" class="daily-card full-card" data-section="terms">
     <h2>重要用語</h2>
     <p class="section-subtitle">用語、意味、試験での注意点、落とし穴を整理する。</p>
     <div class="term-pills">
@@ -490,9 +654,31 @@
         </tbody>
       </table>
     </div>
+    <div class="term-card-list" aria-label="重要用語のモバイル表示">
+      {% for item in terms %}
+      <article class="term-card">
+        <div class="term-card__header">
+          <span class="term-card__number">{{ "%02d"|format(loop.index) }}</span>
+          <div class="term-card__term">{{ item.term }}</div>
+        </div>
+        <div class="term-card__field" data-term-field="meaning">
+          <div class="term-card__label">意味</div>
+          <p class="term-card__body">{{ item.meaning }}</p>
+        </div>
+        <div class="term-card__field" data-term-field="exam-note">
+          <div class="term-card__label">注意</div>
+          <p class="term-card__body">{{ item.exam_note }}</p>
+        </div>
+        <div class="term-card__field" data-term-field="trap">
+          <div class="term-card__label">罠</div>
+          <p class="term-card__body">{% if item.trap %}{{ item.trap }}{% else %}-{% endif %}</p>
+        </div>
+      </article>
+      {% endfor %}
+    </div>
   </section>
 
-  <section class="daily-card full-card" data-section="daily-explanation">
+  <section id="daily-explanation" class="daily-card full-card" data-section="daily-explanation">
     <h2>今日知识点讲解</h2>
     <p class="section-subtitle">読解範囲、弱点、選定問題の知識点をつなげて整理する。</p>
     {% for point in daily_explanation %}
@@ -500,7 +686,7 @@
     {% endfor %}
   </section>
 
-  <section class="daily-card full-card" data-section="questions">
+  <section id="questions" class="daily-card full-card" data-section="questions">
     <h2>科目A 練習問題</h2>
     <p class="section-subtitle">本日のテーマに合わせて Runtime 題庫から選んだ {{ questions|length }} 問</p>
     <div class="question-list">
@@ -556,7 +742,7 @@
     </div>
   </section>
 
-  <section class="daily-card full-card" data-section="knowledge-points">
+  <section id="knowledge-points" class="daily-card full-card" data-section="knowledge-points">
     <h2>知識メモ</h2>
     <p class="section-subtitle">解答確認前に押さえる短い復習</p>
     {% for point in knowledge_points %}
@@ -565,7 +751,7 @@
   </section>
 
   <div class="review-grid">
-    <section class="daily-card" data-section="review">
+    <section id="review" class="daily-card" data-section="review">
       <h2>復習欄</h2>
       <p class="section-subtitle">誤答理由の候補:</p>
       <ul class="review-list">
@@ -589,7 +775,7 @@
       </table>
     </section>
 
-    <section class="daily-card" data-section="tomorrow">
+    <section id="tomorrow" class="daily-card" data-section="tomorrow">
       <h2>明日の提案</h2>
       <p>{% if tomorrow_suggestion.theme is defined %}{{ tomorrow_suggestion.theme }}{% else %}次の予定テーマを続けて復習する。{% endif %}</p>
     </section>
