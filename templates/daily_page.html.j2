@@ -805,6 +805,9 @@
           <div data-question-field="question-body">
             <p><strong>問題文</strong></p>
             <p>{{ question.question_text }}</p>
+            {% for image in question.images %}
+            <p><img src="{{ image.publicPath }}" alt="{% if image.alt is defined %}{{ image.alt }}{% else %}問題 {{ question_index }} の問題画像{% endif %}"></p>
+            {% endfor %}
           </div>
 
           <p><strong>選択肢</strong></p>
@@ -831,9 +834,11 @@
             <p><strong>正答</strong>: {{ question.answer }}</p>
             <p><strong>解説</strong></p>
             <p>{{ question.explanation }}</p>
-            {% for image in question.images %}
+            {% if question.explanation_images is defined %}
+            {% for image in question.explanation_images %}
             <p><img src="{{ image.publicPath }}" alt="{% if image.alt is defined %}{{ image.alt }}{% else %}問題 {{ question_index }} の解説画像{% endif %}"></p>
             {% endfor %}
+            {% endif %}
             <p><strong>関連用語</strong>: {% if question.knowledge_point %}{{ question.knowledge_point }}, {% endif %}{{ main_theme }}</p>
             <p><strong>他の選択肢が誤りである理由</strong></p>
             <ul class="wrong-choice-list">

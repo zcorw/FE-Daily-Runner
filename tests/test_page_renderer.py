@@ -213,7 +213,7 @@ def test_render_daily_page_uses_question_specific_distractor_explanations():
     assert "Dは条件に合わないため誤りです 1" in html
 
 
-def test_render_daily_page_places_question_images_in_answer_explanation_area():
+def test_render_daily_page_places_runtime_images_in_question_body():
     html = render_daily_page(daily_content(), template_dir=ROOT / "templates")
     soup = BeautifulSoup(html, "html.parser")
 
@@ -224,8 +224,27 @@ def test_render_daily_page_places_question_images_in_answer_explanation_area():
 
     assert question_body is not None
     assert explanation_area is not None
-    assert question_body.select("img") == []
-    assert explanation_area.select_one('img[src="/assets/fe-siken/q1.png"]')
+    assert question_body.select_one('img[src="/assets/fe-siken/q1.png"]')
+    assert explanation_area.select('img[src="/assets/fe-siken/q1.png"]') == []
+
+
+def test_render_daily_page_places_explicit_explanation_images_in_answer_area():
+    content = daily_content()
+    content.questions[0].images = [{"publicPath": "/assets/fe-siken/question.png"}]
+    content.questions[0].explanation_images = [{"publicPath": "/assets/fe-siken/explanation.png"}]
+    html = render_daily_page(content, template_dir=ROOT / "templates")
+    soup = BeautifulSoup(html, "html.parser")
+
+    first_question = soup.select_one('[data-question="1"]')
+    assert first_question is not None
+    question_body = first_question.select_one('[data-question-field="question-body"]')
+    explanation_area = first_question.select_one('[data-question-field="answer-explanation"]')
+
+    assert question_body is not None
+    assert explanation_area is not None
+    assert question_body.select_one('img[src="/assets/fe-siken/question.png"]')
+    assert explanation_area.select_one('img[src="/assets/fe-siken/explanation.png"]')
+    assert explanation_area.select('img[src="/assets/fe-siken/question.png"]') == []
 
 
 def test_render_daily_page_supports_interactive_question_answers():
