@@ -213,6 +213,52 @@ def test_render_daily_page_uses_question_specific_distractor_explanations():
     assert "Dは条件に合わないため誤りです 1" in html
 
 
+def test_render_daily_page_places_question_images_in_answer_explanation_area():
+    html = render_daily_page(daily_content(), template_dir=ROOT / "templates")
+    soup = BeautifulSoup(html, "html.parser")
+
+    first_question = soup.select_one('[data-question="1"]')
+    assert first_question is not None
+    question_body = first_question.select_one('[data-question-field="question-body"]')
+    explanation_area = first_question.select_one('[data-question-field="answer-explanation"]')
+
+    assert question_body is not None
+    assert explanation_area is not None
+    assert question_body.select("img") == []
+    assert explanation_area.select_one('img[src="/assets/fe-siken/q1.png"]')
+
+
+def test_render_daily_page_supports_interactive_question_answers():
+    html = render_daily_page(daily_content(), template_dir=ROOT / "templates")
+    soup = BeautifulSoup(html, "html.parser")
+
+    first_question = soup.select_one('[data-question="1"]')
+    assert first_question is not None
+    assert first_question["data-answer"] == "A"
+    choice_buttons = first_question.select("button.choice-button[data-choice-option]")
+    reveal_button = first_question.select_one("button.answer-toggle[data-answer-toggle]")
+    answer_area = first_question.select_one('[data-question-field="answer-explanation"]')
+    status = first_question.select_one("[data-choice-status]")
+
+    assert [button["data-choice-label"] for button in choice_buttons] == ["A", "B", "C", "D"]
+    assert [button.get_text(" ", strip=True) for button in choice_buttons] == [
+        "A アルファ",
+        "B ベータ",
+        "C ガンマ",
+        "D デルタ",
+    ]
+    assert all(button["aria-pressed"] == "false" for button in choice_buttons)
+    assert reveal_button is not None
+    assert reveal_button.get_text(strip=True) == "解答を表示"
+    assert answer_area is not None
+    assert "answer-panel" in answer_area["class"]
+    assert status is not None
+    assert status["aria-live"] == "polite"
+    assert "js-enabled" in html
+    assert "data-choice-option" in html
+    assert "data-answer-toggle" in html
+
+
 def test_render_index_page_links_current_day_once_when_entries_repeat():
     html = render_index_page(
         [

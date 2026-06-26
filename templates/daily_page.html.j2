@@ -3,6 +3,9 @@
 {% block title %}{{ title }}{% endblock %}
 
 {% block content %}
+<script>
+  document.documentElement.classList.add("js-enabled");
+</script>
 <style>
   .daily-shell {
     max-width: 1440px;
@@ -340,6 +343,93 @@
     display: grid;
     gap: 8px;
     padding-left: 1.2rem;
+  }
+
+  .choice-list {
+    padding-left: 0;
+    list-style: none;
+  }
+
+  .choice-button {
+    width: 100%;
+    min-height: 42px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 10px 12px;
+    background: #fff;
+    color: var(--ink);
+    font: inherit;
+    font-weight: 700;
+    line-height: 1.35;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .choice-button:hover,
+  .choice-button:focus-visible {
+    border-color: var(--blue);
+    background: var(--blue-soft);
+    outline: none;
+  }
+
+  .choice-button.is-selected {
+    border-color: var(--blue);
+    box-shadow: inset 4px 0 0 var(--blue);
+  }
+
+  .choice-button.is-correct {
+    border-color: var(--green);
+    background: var(--green-soft);
+    box-shadow: inset 4px 0 0 var(--green);
+  }
+
+  .choice-button.is-incorrect {
+    border-color: var(--red);
+    background: var(--red-soft);
+    box-shadow: inset 4px 0 0 var(--red);
+  }
+
+  .answer-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px 14px;
+    margin: 14px 0;
+  }
+
+  .answer-toggle {
+    min-height: 38px;
+    border: 1px solid var(--green);
+    border-radius: 8px;
+    padding: 8px 12px;
+    background: var(--green);
+    color: #fff;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 800;
+    cursor: pointer;
+  }
+
+  .answer-toggle:hover,
+  .answer-toggle:focus-visible {
+    background: #0f6f47;
+    outline: none;
+  }
+
+  .choice-status {
+    min-height: 1.4em;
+    margin: 0;
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 700;
+  }
+
+  .js-enabled .answer-panel {
+    display: none;
+  }
+
+  .js-enabled .answer-panel.is-open {
+    display: block;
   }
 
   .review-table {
@@ -691,7 +781,8 @@
     <p class="section-subtitle">本日のテーマに合わせて Runtime 題庫から選んだ {{ questions|length }} 問</p>
     <div class="question-list">
       {% for question in questions %}
-      <article class="question-card" data-question="{{ loop.index }}">
+      {% set question_index = loop.index %}
+      <article class="question-card" data-question="{{ loop.index }}" data-answer="{{ question.answer }}">
         <div class="question-card__summary">
           <div class="question-card__number">{{ "%02d"|format(loop.index) }}</div>
           <div>
@@ -711,31 +802,48 @@
             <li>シラバス領域: {% if question.syllabus_area is defined %}{{ question.syllabus_area }}{% else %}科目A{% endif %}</li>
           </ul>
 
-          <p><strong>問題文</strong></p>
-          <p>{{ question.question_text }}</p>
-          {% for image in question.images %}
-          <p><img src="{{ image.publicPath }}" alt="{% if image.alt is defined %}{{ image.alt }}{% else %}問題 {{ loop.index }} の参照画像{% endif %}"></p>
-          {% endfor %}
+          <div data-question-field="question-body">
+            <p><strong>問題文</strong></p>
+            <p>{{ question.question_text }}</p>
+          </div>
 
           <p><strong>選択肢</strong></p>
           <ul class="choice-list">
             {% for key, value in question.choices.items() %}
-            <li>{{ key }} {{ value }}</li>
+            <li>
+              <button
+                type="button"
+                class="choice-button"
+                data-choice-option
+                data-choice-label="{{ key }}"
+                aria-pressed="false"
+              >{{ key }} {{ value }}</button>
+            </li>
             {% endfor %}
           </ul>
 
-          <p><strong>正答</strong>: {{ question.answer }}</p>
-          <p><strong>解説</strong></p>
-          <p>{{ question.explanation }}</p>
-          <p><strong>関連用語</strong>: {% if question.knowledge_point %}{{ question.knowledge_point }}, {% endif %}{{ main_theme }}</p>
-          <p><strong>他の選択肢が誤りである理由</strong></p>
-          <ul class="wrong-choice-list">
-            {% for key, value in question.choices.items() %}
-            {% if key != question.answer %}
-            <li>{{ key }} {{ question.distractor_explanations[key] }}</li>
-            {% endif %}
+          <div class="answer-actions">
+            <button type="button" class="answer-toggle" data-answer-toggle aria-expanded="false">解答を表示</button>
+            <p class="choice-status" data-choice-status aria-live="polite"></p>
+          </div>
+
+          <div class="answer-panel" data-question-field="answer-explanation">
+            <p><strong>正答</strong>: {{ question.answer }}</p>
+            <p><strong>解説</strong></p>
+            <p>{{ question.explanation }}</p>
+            {% for image in question.images %}
+            <p><img src="{{ image.publicPath }}" alt="{% if image.alt is defined %}{{ image.alt }}{% else %}問題 {{ question_index }} の解説画像{% endif %}"></p>
             {% endfor %}
-          </ul>
+            <p><strong>関連用語</strong>: {% if question.knowledge_point %}{{ question.knowledge_point }}, {% endif %}{{ main_theme }}</p>
+            <p><strong>他の選択肢が誤りである理由</strong></p>
+            <ul class="wrong-choice-list">
+              {% for key, value in question.choices.items() %}
+              {% if key != question.answer %}
+              <li>{{ key }} {{ question.distractor_explanations[key] }}</li>
+              {% endif %}
+              {% endfor %}
+            </ul>
+          </div>
         </div>
       </article>
       {% endfor %}
@@ -783,4 +891,64 @@
 
   <p class="footer-note">ローカル FE Daily ページから生成 / {{ page_url }}</p>
 </article>
+<script>
+  (function () {
+    function openAnswer(card) {
+      var panel = card.querySelector('[data-question-field="answer-explanation"]');
+      var toggle = card.querySelector("[data-answer-toggle]");
+      if (!panel || !toggle) return;
+      panel.classList.add("is-open");
+      toggle.setAttribute("aria-expanded", "true");
+      toggle.textContent = "解答を表示中";
+    }
+
+    function updateChoiceState(card, selectedButton) {
+      var answer = card.getAttribute("data-answer");
+      var status = card.querySelector("[data-choice-status]");
+      var buttons = card.querySelectorAll("[data-choice-option]");
+
+      buttons.forEach(function (button) {
+        var label = button.getAttribute("data-choice-label");
+        button.classList.remove("is-selected", "is-correct", "is-incorrect");
+        button.setAttribute("aria-pressed", "false");
+        if (label === answer) {
+          button.classList.add("is-correct");
+        }
+      });
+
+      selectedButton.classList.add("is-selected");
+      selectedButton.setAttribute("aria-pressed", "true");
+      if (selectedButton.getAttribute("data-choice-label") !== answer) {
+        selectedButton.classList.add("is-incorrect");
+      }
+      if (status) {
+        status.textContent = selectedButton.getAttribute("data-choice-label") === answer
+          ? "正解です。解説を確認しましょう。"
+          : "選択した答えと正答を比べましょう。";
+      }
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+      document.querySelectorAll("[data-question]").forEach(function (card) {
+        var toggle = card.querySelector("[data-answer-toggle]");
+        var panel = card.querySelector('[data-question-field="answer-explanation"]');
+        if (toggle && panel) {
+          var panelId = "answer-panel-" + card.getAttribute("data-question");
+          panel.id = panelId;
+          toggle.setAttribute("aria-controls", panelId);
+          toggle.addEventListener("click", function () {
+            openAnswer(card);
+          });
+        }
+
+        card.querySelectorAll("[data-choice-option]").forEach(function (button) {
+          button.addEventListener("click", function () {
+            updateChoiceState(card, button);
+            openAnswer(card);
+          });
+        });
+      });
+    });
+  }());
+</script>
 {% endblock %}
