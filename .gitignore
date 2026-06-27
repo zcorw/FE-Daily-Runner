@@ -3,3 +3,7 @@ logs
 __pycache__/
 *.py[cod]
 .pytest_cache/
+personal/progress.md
+site/*
+!site/.gitkeep
+state/daily_state.json

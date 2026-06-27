@@ -61,6 +61,19 @@ class FakeQuestionClient:
         }
 
 
+class FallbackOnlyQuestionClient(FakeQuestionClient):
+    def search_candidates(self, payload: dict[str, Any]) -> dict[str, Any]:
+        self.calls.append(f"search_candidates:{payload['keywords'][0]}")
+        if payload["keywords"] != ["security"]:
+            return {"questions": []}
+        return {
+            "questions": [
+                {"url": f"https://example.test/fallback{index}", "examPart": "科目A"}
+                for index in range(1, 11)
+            ]
+        }
+
+
 class FakeGenerator:
     def __init__(self) -> None:
         self.payload: dict[str, Any] | None = None
@@ -179,6 +192,37 @@ def test_run_daily_workflow_dry_run_uses_full_chain_without_formal_write(tmp_pat
     assert "これは題庫の解説です 1" in validated
     assert "Bは題庫の誤答解説です 1" in validated
     assert not daily_page_path(settings.output_dir, date(2026, 6, 13)).exists()
+
+
+def test_run_daily_workflow_uses_fallback_question_search_when_focus_has_too_few_matches(tmp_path):
+    plan_path = tmp_path / "june-study-plan.md"
+    plan_path.write_text(
+        "\n".join(
+            [
+                "| Date | Main Theme | 20-Minute Reading Assignment | Practice Focus |",
+                "|---|---|---|---|",
+                "| 2026-06-24 | マネジメント計算 | Ch.10.1 p.337-346 | PERT 3, man-month/cost 3, SLA 2, DB 2 |",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    settings = load_settings(_env_file=None, output_dir=tmp_path / "site", template_dir=ROOT / "templates")
+    question_client = FallbackOnlyQuestionClient()
+
+    result = run_daily_workflow(
+        settings=settings,
+        target_date=date(2026, 6, 24),
+        run_mode=RunMode.DRY_RUN,
+        plan_path=plan_path,
+        weak_points="- SQL",
+        mistake_log="- GROUP BY",
+        recent_progress="- DB",
+        question_client=question_client,
+        generator=FakeGenerator(),
+    )
+
+    assert result.status == "success"
+    assert "search_candidates:security" in question_client.calls
 
 
 def write_plan(path: Path) -> None:

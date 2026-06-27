@@ -1,6 +1,11 @@
 from datetime import date
 
-from fe_daily.study_plan import build_fallback_plan_entry, load_study_plan_entry, select_study_plan_entry
+from fe_daily.study_plan import (
+    build_fallback_plan_entry,
+    ensure_monthly_plan,
+    load_study_plan_entry,
+    select_study_plan_entry,
+)
 
 
 def test_load_study_plan_entry_reads_june_plan_row(tmp_path):
@@ -94,6 +99,57 @@ def test_select_study_plan_entry_falls_back_when_date_missing(tmp_path):
     assert "SQL aggregation mistakes" in entry.main_theme
     assert "weak points" in entry.reading_assignment
     assert entry.practice_focus == "SQL aggregation mistakes 10"
+
+
+def test_select_study_plan_entry_generates_monthly_plan_when_target_month_missing(tmp_path):
+    plan_path = tmp_path / "study-plan.md"
+    plan_path.write_text(
+        "\n".join(
+            [
+                "| Date | Main Theme | 20-Minute Reading Assignment | Practice Focus |",
+                "|---|---|---|---|",
+                "| 2026-06-30 | Monthly Review | Review June | security 10 |",
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    entry = select_study_plan_entry(
+        plan_path,
+        date(2026, 7, 1),
+        weak_points="- SQL aggregation mistakes",
+        mistake_log="- GROUP BY vs WHERE",
+        recent_progress="- Finished database normalization",
+    )
+
+    text = plan_path.read_text(encoding="utf-8")
+    assert "## Auto-generated Study Plan - 2026-07" in text
+    assert "| 2026-07-01 | 弱点補強: SQL aggregation mistakes |" in text
+    assert entry.date == date(2026, 7, 1)
+    assert entry.practice_focus == "security 4, SQL 2, availability 2, network 2"
+
+
+def test_ensure_monthly_plan_does_not_rewrite_when_month_exists(tmp_path):
+    plan_path = tmp_path / "study-plan.md"
+    original = "\n".join(
+        [
+            "| Date | Main Theme | 20-Minute Reading Assignment | Practice Focus |",
+            "|---|---|---|---|",
+            "| 2026-07-02 | Existing July Plan | Review | security 10 |",
+        ]
+    )
+    plan_path.write_text(original, encoding="utf-8")
+
+    generated = ensure_monthly_plan(
+        plan_path,
+        date(2026, 7, 1),
+        weak_points="",
+        mistake_log="",
+        recent_progress="",
+    )
+
+    assert generated is False
+    assert plan_path.read_text(encoding="utf-8") == original
 
 
 def test_build_fallback_plan_entry_uses_mistake_log_when_weak_points_empty():

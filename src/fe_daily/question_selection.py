@@ -20,14 +20,41 @@ SUBJECT_A_EXAM_PARTS = {SUBJECT_A_EXAM_PART, LEGACY_MOJIBAKE_SUBJECT_A_EXAM_PART
 CANONICAL_TOPIC_TAG_ALIASES = (
     (("transaction",), ("transaction",)),
     (("lock", "recovery", "rollback", "commit"), ("transaction",)),
-    (("sql",), ("sql",)),
+    (("sql", "db", "database"), ("sql",)),
     (("security",), ("security",)),
     (("waf", "ids", "dmz"), ("security",)),
     (("backup", "availability"), ("availability",)),
+    (("mtbf", "mttr", "mips", "performance"), ("availability",)),
+    (("network",), ("network",)),
+    (("sort", "search", "tree", "list", "stack", "algorithm", "pseudo-language", "data structure"), ("algorithm",)),
+    (("pert", "man-month", "sla", "cost"), ("project_management", "service_management")),
+    (("break-even", "roi", "sales", "profit"), ("topic_0ca193e39c",)),
+    (("law", "public question", "weak categories", "monthly review", "july planning"), ("topic_51357175b8",)),
 )
 SEARCH_KEYWORD_ALIASES = (
+    (("project",), "プロジェクトマネジメント"),
+    (("service management",), "サービスマネジメント"),
+    (("pert", "man-month", "cost"), "プロジェクトマネジメント"),
+    (("sla",), "サービスマネジメント"),
     (("waf", "ids", "dmz", "security"), "security"),
     (("backup", "availability"), "availability"),
+    (("mtbf", "mttr", "mips", "performance"), "availability"),
+    (("network",), "network"),
+    (("db", "database"), "SQL"),
+    (("sort", "search", "tree", "list", "stack", "algorithm", "pseudo-language", "data structure"), "アルゴリズム"),
+    (("audit",), "システム監査"),
+    (("break-even",), "損益分岐点"),
+    (("roi", "sales", "profit"), "会計・財務"),
+    (("law",), "セキュリティ関連法規"),
+    (("public question", "weak categories", "monthly review", "july planning"), "security"),
+)
+FALLBACK_CANDIDATE_SEARCH_PAYLOADS: tuple[dict[str, Any], ...] = (
+    {"keywords": ["security"], "topicTags": ["security"], "examPart": SUBJECT_A_EXAM_PART, "limit": 20},
+    {"keywords": ["availability"], "topicTags": ["availability"], "examPart": SUBJECT_A_EXAM_PART, "limit": 20},
+    {"keywords": ["SQL"], "topicTags": ["sql"], "examPart": SUBJECT_A_EXAM_PART, "limit": 20},
+    {"keywords": ["network"], "topicTags": ["network"], "examPart": SUBJECT_A_EXAM_PART, "limit": 20},
+    {"keywords": ["会計・財務"], "topicTags": ["topic_0ca193e39c"], "examPart": SUBJECT_A_EXAM_PART, "limit": 20},
+    {"keywords": ["セキュリティ関連法規"], "topicTags": ["topic_51357175b8"], "examPart": SUBJECT_A_EXAM_PART, "limit": 20},
 )
 
 
@@ -74,6 +101,10 @@ def build_candidate_search_payloads(targets: list[FocusTarget]) -> list[dict[str
             payload["topicTags"] = topic_tags
         payloads.append(payload)
     return payloads
+
+
+def build_fallback_candidate_search_payloads() -> list[dict[str, Any]]:
+    return [dict(payload) for payload in FALLBACK_CANDIDATE_SEARCH_PAYLOADS]
 
 
 def _keywords_for_label(label: str) -> list[str]:

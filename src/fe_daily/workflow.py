@@ -22,7 +22,9 @@ from fe_daily.progress_context import upsert_progress_entry
 from fe_daily.prompt_builder import build_generation_payload
 from fe_daily.question_details import load_required_details
 from fe_daily.question_selection import (
+    InsufficientQuestionsError,
     build_candidate_search_payloads,
+    build_fallback_candidate_search_payloads,
     parse_practice_focus,
     select_subject_a_questions,
 )
@@ -110,11 +112,21 @@ def run_daily_workflow(
         question_client.search_candidates(payload).get("questions", [])
         for payload in candidate_payloads
     ]
-    selected_questions = select_subject_a_questions(
-        candidate_groups,
-        required_count=10,
-        focus_targets=focus_targets,
-    )
+    try:
+        selected_questions = select_subject_a_questions(
+            candidate_groups,
+            required_count=10,
+            focus_targets=focus_targets,
+        )
+    except InsufficientQuestionsError:
+        fallback_groups = [
+            question_client.search_candidates(payload).get("questions", [])
+            for payload in build_fallback_candidate_search_payloads()
+        ]
+        selected_questions = select_subject_a_questions(
+            [*candidate_groups, *fallback_groups],
+            required_count=10,
+        )
     details = load_required_details(
         question_client,
         [question["url"] for question in selected_questions],

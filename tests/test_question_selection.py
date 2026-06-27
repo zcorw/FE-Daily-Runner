@@ -4,6 +4,7 @@ from fe_daily.question_selection import (
     FocusTarget,
     InsufficientQuestionsError,
     build_candidate_search_payloads,
+    build_fallback_candidate_search_payloads,
     parse_practice_focus,
     select_subject_a_questions,
 )
@@ -46,7 +47,7 @@ def test_build_candidate_search_payloads_use_runtime_api_shape():
 
     assert payloads == [
         {"keywords": ["SQL join/group"], "topicTags": ["sql"], "examPart": "科目A", "limit": 20},
-        {"keywords": ["DB design"], "examPart": "科目A", "limit": 10},
+        {"keywords": ["SQL"], "topicTags": ["sql"], "examPart": "科目A", "limit": 10},
     ]
 
 
@@ -73,6 +74,64 @@ def test_build_candidate_search_payloads_normalizes_compound_security_and_backup
         {"keywords": ["security"], "topicTags": ["security"], "examPart": "科目A", "limit": 15},
         {"keywords": ["availability"], "topicTags": ["availability"], "examPart": "科目A", "limit": 10},
     ]
+
+
+def test_build_candidate_search_payloads_maps_management_plan_labels_to_runtime_keywords():
+    targets = parse_practice_focus("Project 3, service management 3, audit 2, security 2")
+
+    payloads = build_candidate_search_payloads(targets)
+
+    assert payloads == [
+        {"keywords": ["プロジェクトマネジメント"], "examPart": "科目A", "limit": 15},
+        {"keywords": ["サービスマネジメント"], "examPart": "科目A", "limit": 15},
+        {"keywords": ["システム監査"], "examPart": "科目A", "limit": 10},
+        {"keywords": ["security"], "topicTags": ["security"], "examPart": "科目A", "limit": 10},
+    ]
+
+
+def test_build_candidate_search_payloads_maps_strategy_calculation_plan_labels_to_runtime_keywords():
+    targets = parse_practice_focus("Break-even 3, ROI 3, sales/profit 2, law 2")
+
+    payloads = build_candidate_search_payloads(targets)
+
+    assert payloads == [
+        {"keywords": ["損益分岐点"], "topicTags": ["topic_0ca193e39c"], "examPart": "科目A", "limit": 15},
+        {"keywords": ["会計・財務"], "topicTags": ["topic_0ca193e39c"], "examPart": "科目A", "limit": 15},
+        {"keywords": ["会計・財務"], "topicTags": ["topic_0ca193e39c"], "examPart": "科目A", "limit": 10},
+        {"keywords": ["セキュリティ関連法規"], "topicTags": ["topic_51357175b8"], "examPart": "科目A", "limit": 10},
+    ]
+
+
+def test_build_candidate_search_payloads_maps_management_calculation_plan_labels_to_runtime_keywords():
+    targets = parse_practice_focus("PERT 3, man-month/cost 3, SLA 2, DB 2")
+
+    payloads = build_candidate_search_payloads(targets)
+
+    assert payloads == [
+        {
+            "keywords": ["プロジェクトマネジメント"],
+            "topicTags": ["project_management", "service_management"],
+            "examPart": "科目A",
+            "limit": 15,
+        },
+        {
+            "keywords": ["プロジェクトマネジメント"],
+            "topicTags": ["project_management", "service_management"],
+            "examPart": "科目A",
+            "limit": 15,
+        },
+        {"keywords": ["サービスマネジメント"], "topicTags": ["project_management", "service_management"], "examPart": "科目A", "limit": 10},
+        {"keywords": ["SQL"], "topicTags": ["sql"], "examPart": "科目A", "limit": 10},
+    ]
+
+
+def test_build_fallback_candidate_search_payloads_returns_independent_payloads():
+    first = build_fallback_candidate_search_payloads()
+    second = build_fallback_candidate_search_payloads()
+    first[0]["limit"] = 1
+
+    assert second[0]["limit"] == 20
+    assert all(payload["examPart"] == "科目A" for payload in second)
 
 
 def test_build_candidate_search_payloads_rejects_non_positive_counts():
