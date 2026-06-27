@@ -39,7 +39,7 @@ def validate_question_facts(
             "question_text": generated.question_text,
             "choices": generated.choices,
             "answer": generated.answer,
-            "images": _image_public_paths(generated.images),
+            "images": _question_image_public_paths(generated),
         }
         if not generated.explanation.strip():
             raise ContentValidationError(f"question {index} explanation must not be blank")
@@ -55,6 +55,13 @@ def validate_question_facts(
 
 def _image_public_paths(images: list[dict[str, Any]]) -> list[str | None]:
     return [image.get("publicPath") for image in images]
+
+
+def _question_image_public_paths(question: Any) -> list[str | None]:
+    explanation_images = getattr(question, "explanation_images", [])
+    if not isinstance(explanation_images, list):
+        explanation_images = []
+    return _image_public_paths(question.images) + _image_public_paths(explanation_images)
 
 
 def _contains_japanese_text(text: str) -> bool:

@@ -14,6 +14,7 @@ from fe_daily.content_validation import (
 )
 from fe_daily.dry_run import DryRunArtifactPaths, write_dry_run_artifacts
 from fe_daily.health_check import HealthStatus, check_runtime_health
+from fe_daily.image_paths import ImagePathError, MARKDOWN_IMAGE_PATTERN, normalize_image_src
 from fe_daily.output_schema import DailyLearningContent, QuestionLearningBlock
 from fe_daily.output_writer import atomic_write_text
 from fe_daily.page_renderer import render_daily_page, render_index_page
@@ -346,6 +347,11 @@ def _inject_runtime_questions(content: DailyLearningContent, runtime_details: li
 def _question_block_from_runtime_detail(detail: dict[str, Any]) -> dict[str, Any]:
     choices = detail.get("choices")
     answer = detail.get("answer")
+    explanation = _learning_field(detail, "explanation", "explanationJa")
+    explanation, question_images, explanation_images = _split_runtime_images_by_explanation_markdown(
+        explanation,
+        detail.get("images", []),
+    )
     distractor_explanations = _learning_field(
         detail,
         "distractor_explanations",
@@ -357,20 +363,81 @@ def _question_block_from_runtime_detail(detail: dict[str, Any]) -> dict[str, Any
         "question_text": detail.get("questionText"),
         "choices": choices,
         "answer": answer,
-        "explanation": _learning_field(detail, "explanation", "explanationJa"),
+        "explanation": explanation,
         "knowledge_point": _learning_field(detail, "knowledge_point", "knowledgePointJa"),
         "distractor_explanations": _complete_distractor_explanations(
             choices,
             answer,
             distractor_explanations,
         ),
-        "images": detail.get("images", []),
+        "images": question_images,
+        **({"explanation_images": explanation_images} if explanation_images else {}),
         "exam_point": _learning_field(detail, "exam_point", "examPointJa"),
         "common_trap": _learning_field(detail, "common_trap", "commonTrapJa"),
         "syllabus_area": detail.get("syllabusArea"),
         "topic_tags": detail.get("topicTags", []),
         "knowledge_points": detail.get("knowledgePoints", []),
     }
+
+
+def _split_runtime_images_by_explanation_markdown(
+    explanation: Any,
+    images: Any,
+) -> tuple[Any, list[dict[str, Any]], list[dict[str, Any]]]:
+    normalized_images = _normalized_runtime_images(images)
+    if not isinstance(explanation, str):
+        return explanation, normalized_images, []
+
+    explanation_paths: list[str] = []
+
+    def remove_explanation_image(match: Any) -> str:
+        try:
+            public_path = normalize_image_src(match.group("src"))
+        except ImagePathError:
+            return match.group(0)
+        explanation_paths.append(public_path)
+        return ""
+
+    cleaned_explanation = MARKDOWN_IMAGE_PATTERN.sub(remove_explanation_image, explanation).strip()
+    if not explanation_paths:
+        return cleaned_explanation, normalized_images, []
+
+    explanation_path_set = set(explanation_paths)
+    question_images: list[dict[str, Any]] = []
+    explanation_images: list[dict[str, Any]] = []
+    seen_explanation_paths: set[str] = set()
+
+    for image in normalized_images:
+        public_path = image.get("publicPath")
+        if public_path in explanation_path_set:
+            if public_path not in seen_explanation_paths:
+                explanation_images.append(image)
+                seen_explanation_paths.add(public_path)
+            continue
+        question_images.append(image)
+
+    for public_path in explanation_paths:
+        if public_path not in seen_explanation_paths:
+            explanation_images.append({"publicPath": public_path})
+            seen_explanation_paths.add(public_path)
+
+    return cleaned_explanation, question_images, explanation_images
+
+
+def _normalized_runtime_images(images: Any) -> list[dict[str, Any]]:
+    if not isinstance(images, list):
+        return []
+
+    normalized: list[dict[str, Any]] = []
+    for image in images:
+        if not isinstance(image, dict):
+            continue
+        public_path = image.get("publicPath")
+        if not isinstance(public_path, str):
+            normalized.append(dict(image))
+            continue
+        normalized.append({**image, "publicPath": normalize_image_src(public_path)})
+    return normalized
 
 
 def _complete_distractor_explanations(

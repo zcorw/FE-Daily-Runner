@@ -160,6 +160,16 @@ def test_validate_question_facts_accepts_runtime_image_metadata():
     validate_question_facts(generated_content(), [detail])
 
 
+def test_validate_question_facts_accepts_runtime_images_split_between_question_and_explanation():
+    validate_question_facts(
+        generated_content(
+            images=[],
+            explanation_images=[{"publicPath": "/assets/fe-siken/r7/q1.png"}],
+        ),
+        [runtime_detail()],
+    )
+
+
 def test_validate_question_facts_rejects_blank_generated_explanation():
     with pytest.raises(ContentValidationError) as exc_info:
         validate_question_facts(generated_content(explanation="   "), [runtime_detail()])

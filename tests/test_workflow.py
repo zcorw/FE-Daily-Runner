@@ -257,6 +257,27 @@ def test_question_block_generates_fallback_distractor_explanations_when_runtime_
     }
 
 
+def test_question_block_moves_explanation_markdown_images_out_of_question_body():
+    block = _question_block_from_runtime_detail(
+        {
+            "url": "https://example.test/q1",
+            "questionText": "Question",
+            "choices": {"ア": "alpha", "イ": "beta"},
+            "answer": "ア",
+            "explanation": (
+                "これは題庫の解説です。\n\n"
+                "![table](http://question-bank-runtime:8000/assets/fe-siken/r7/q1.png)"
+            ),
+            "images": [{"publicPath": "http://question-bank-runtime:8000/assets/fe-siken/r7/q1.png"}],
+        }
+    )
+
+    assert block["images"] == []
+    assert block["explanation_images"] == [{"publicPath": "/assets/fe-siken/r7/q1.png"}]
+    assert "![table]" not in block["explanation"]
+    assert block["explanation"] == "これは題庫の解説です。"
+
+
 def test_run_daily_workflow_skip_policy_does_not_call_openai_for_existing_page(tmp_path):
     plan_path = tmp_path / "june-study-plan.md"
     write_plan(plan_path)
