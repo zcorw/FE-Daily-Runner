@@ -170,6 +170,32 @@ def test_validate_question_facts_accepts_runtime_images_split_between_question_a
     )
 
 
+def test_validate_question_facts_accepts_split_explanation_images_regardless_of_render_group_order():
+    detail = runtime_detail()
+    detail["images"] = [
+        {"publicPath": "/assets/fe-siken/02_menjo/q28/28.png"},
+        {"publicPath": "/assets/fe-siken/02_menjo/q28/28_1.png"},
+        {"publicPath": "/assets/fe-siken/02_menjo/q28/28a.png"},
+        {"publicPath": "/assets/fe-siken/02_menjo/q28/28i.png"},
+        {"publicPath": "/assets/fe-siken/02_menjo/q28/28u.png"},
+        {"publicPath": "/assets/fe-siken/02_menjo/q28/28e.png"},
+    ]
+
+    validate_question_facts(
+        generated_content(
+            images=[
+                {"publicPath": "/assets/fe-siken/02_menjo/q28/28.png"},
+                {"publicPath": "/assets/fe-siken/02_menjo/q28/28a.png"},
+                {"publicPath": "/assets/fe-siken/02_menjo/q28/28i.png"},
+                {"publicPath": "/assets/fe-siken/02_menjo/q28/28u.png"},
+                {"publicPath": "/assets/fe-siken/02_menjo/q28/28e.png"},
+            ],
+            explanation_images=[{"publicPath": "/assets/fe-siken/02_menjo/q28/28_1.png"}],
+        ),
+        [detail],
+    )
+
+
 def test_validate_question_facts_rejects_blank_generated_explanation():
     with pytest.raises(ContentValidationError) as exc_info:
         validate_question_facts(generated_content(explanation="   "), [runtime_detail()])

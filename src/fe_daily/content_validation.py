@@ -1,4 +1,5 @@
 import re
+from collections import Counter
 from typing import Any
 
 from bs4 import BeautifulSoup
@@ -46,9 +47,14 @@ def validate_question_facts(
         if not _contains_japanese_text(generated.explanation):
             raise ContentValidationError(f"question {index} explanation must be Japanese")
         for field, expected_value in expected.items():
-            if actual[field] != expected_value:
+            actual_value = actual[field]
+            if field == "images":
+                values_match = Counter(actual_value) == Counter(expected_value)
+            else:
+                values_match = actual_value == expected_value
+            if not values_match:
                 raise ContentValidationError(
-                    f"question {index} {field} changed: expected {expected_value!r}, got {actual[field]!r}"
+                    f"question {index} {field} changed: expected {expected_value!r}, got {actual_value!r}"
                 )
         _validate_distractor_explanations(index, generated)
 
