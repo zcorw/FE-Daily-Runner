@@ -1,62 +1,45 @@
-# FE Daily Python/OpenAI New Project Dev Kit
+# FE Daily Runner
 
-This folder is a portable development kit for building the new FE daily page generator in a separate project directory.
+A Python-based workflow that generates personalized daily study pages for Japan's Fundamental Information Technology Engineer Examination (FE).
 
-## Purpose
+> Part of **[FE Study System](https://github.com/zcorw/FE-System)** — the automated daily study generator powered by the shared question bank and OpenAI.
 
-Use this folder as the single source package for the new project. It contains the project requirements, reference documents, legacy context, and the prompt for generating phased development TodoLists.
+**FE Study System:**  
+[System Overview](https://github.com/zcorw/FE-System) ·
+[Question Bank](https://github.com/zcorw/fe-question-bank-service) ·
+[Quiz App](https://github.com/zcorw/fe-siken-quiz-bot) ·
+**Daily Runner**
 
-The new project should:
+## Role in the System
 
-- Use Python instead of Codex for orchestration.
-- Use OpenAI API for structured content generation.
-- Use Python templates, preferably Jinja2, to generate pages.
-- Read questions through FE Question Bank Service Runtime API.
-- Avoid direct local SQLite and local image-cache reads.
-- Avoid Git commit/push as the page delivery mechanism.
-
-## Folder Structure
+This service generates personalized daily study content from learning context
+and shared FE question-bank data.
 
 ```text
-new-project-dev-kit/
-├─ README.md
-├─ references/
-│  ├─ PROJECT_REQUIREMENTS.md
-│  ├─ question-bank-service/
-│  │  └─ CONSUMER_INTEGRATION_GUIDE.md
-│  ├─ legacy-project/
-│  │  ├─ README.md
-│  │  ├─ june-study-plan.md
-│  │  ├─ database-and-assets.md
-│  │  └─ daily_publish_prompt.md
-│  ├─ personal-context/
-│  │  ├─ progress.md
-│  │  ├─ weak_points.md
-│  │  └─ mistake_log.md
-│  └─ legacy-todolist/
-│     └─ 01_QUESTION_BANK_SERVICE_MIGRATION.md
-├─ prompts/
-│  └─ generate-development-todolists.md
-└─ todolist/
-   └─ README.md
+Personal Study Context
+          +
+FE Question Bank Service
+          +
+       OpenAI
+          │
+          ↓
+    Daily Runner
+          │
+          ↓
+   Static Study Page
+          │
+          ↓
+ Telegram Notification
 ```
 
-## Recommended Use
+Unlike the interactive quiz application, the Daily Runner operates as an
+automated learning workflow rather than an on-demand practice interface.
 
-1. Copy `new-project-dev-kit/` into the new project workspace.
-2. Run the prompt in `prompts/generate-development-todolists.md`.
-3. Generate TodoList files into `new-project-dev-kit/todolist/`.
-4. Execute the TodoLists task by task in the new project, not in the legacy repository.
+It consumes question data through
+[FE Question Bank Service](https://github.com/zcorw/fe-question-bank-service).
 
-## Primary Document
-
-Start from:
-
-```text
-references/PROJECT_REQUIREMENTS.md
-```
-
-Use other files only as supporting context.
+For the complete platform architecture, see
+[FE-System](https://github.com/zcorw/FE-System).
 
 ## Project Documentation
 
@@ -176,7 +159,9 @@ Operational logs are written under:
 logs/daily_publish/
 ```
 
-Use `python scripts/daily_publish.py --health-check` or run `curl -fsS http://question-bank-runtime:8000/health` inside the consumer container before enabling the schedule.
+Use `python scripts/daily_publish.py --health-check` or run
+`curl -fsS http://question-bank-runtime:8000/health` inside the consumer container
+before enabling the schedule.
 
 ## Browser Image Proxy
 
@@ -190,8 +175,22 @@ hostname is only resolvable inside the Docker network. Serve or proxy
 $QUESTION_BANK_SERVICE_URL/assets/fe-siken/<asset-path>
 ```
 
-## Notes
+## Development Kit and Historical Context
 
-- `references/legacy-todolist/01_QUESTION_BANK_SERVICE_MIGRATION.md` is historical context. Do not treat it as the target architecture because it still reflects older migration thinking.
-- New TodoLists should be generated under `todolist/`.
-- The new project runtime must not depend on files under this legacy repository.
+The repository also contains a portable development kit used during the rewrite
+from the legacy FE Daily Runner architecture.
+
+The new implementation was designed to:
+
+- use Python instead of Codex for orchestration,
+- use the OpenAI API for structured content generation,
+- use Python templates, preferably Jinja2, to generate pages,
+- read questions through FE Question Bank Service Runtime API,
+- avoid direct local SQLite and local image-cache reads,
+- avoid Git commit/push as the page delivery mechanism.
+
+Legacy project references are kept only as supporting context and should not be
+treated as the target runtime architecture.
+
+For the original implementation, see
+[FE-Daily-Runner](https://github.com/zcorw/FE-Daily-Runner).
